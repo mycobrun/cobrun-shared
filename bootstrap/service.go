@@ -56,28 +56,22 @@ func Initialize(ctx context.Context, serviceName string, opts Options) (*Service
 	}
 
 	// Configure SQL if enabled
-	if opts.UseSQL && cfg.SQLHost != "" {
-		dbConfig.SQLHost = cfg.SQLHost
-		dbConfig.SQLPort = cfg.SQLPort
-		dbConfig.SQLDatabase = cfg.SQLDatabase
-		dbConfig.SQLUser = cfg.SQLUser
-		dbConfig.SQLPassword = cfg.SQLPassword
+	if opts.UseSQL && cfg.SQLConnectionString != "" {
 		dbConfig.SQLConnString = cfg.SQLConnectionString
 		dbConfig.SQLUseMSI = cfg.IsProduction()
-		log.Printf("SQL Server: %s/%s", cfg.SQLHost, cfg.SQLDatabase)
+		log.Printf("SQL Server: connection string configured")
 	}
 
 	// Configure Cosmos DB if enabled
 	if opts.UseCosmos && cfg.CosmosDBEndpoint != "" {
 		dbConfig.CosmosEndpoint = cfg.CosmosDBEndpoint
 		dbConfig.CosmosDatabase = cfg.CosmosDBDatabase
-		dbConfig.CosmosKey = cfg.CosmosDBKey
 		log.Printf("Cosmos DB: %s/%s", cfg.CosmosDBEndpoint, cfg.CosmosDBDatabase)
 	}
 
 	// Configure Redis if enabled
 	if opts.UseRedis && cfg.RedisHost != "" {
-		dbConfig.RedisHost = cfg.GetRedisAddr()
+		dbConfig.RedisHost = cfg.RedisHost
 		dbConfig.RedisPassword = cfg.RedisPassword
 		log.Printf("Redis: %s", cfg.RedisHost)
 	}

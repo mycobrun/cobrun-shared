@@ -80,25 +80,17 @@ func DefaultConnectionConfig() *ConnectionConfig {
 // ConnectionConfigFromConfig creates a ConnectionConfig from a config.Config.
 // This allows seamless integration with Key Vault-based configuration.
 func ConnectionConfigFromConfig(cfg *config.Config) *ConnectionConfig {
-	redisAddr := cfg.GetRedisAddr()
-	
 	return &ConnectionConfig{
 		// SQL Server (from Key Vault or env)
-		SQLHost:       cfg.SQLHost,
-		SQLPort:       cfg.SQLPort,
-		SQLDatabase:   cfg.SQLDatabase,
-		SQLUser:       cfg.SQLUser,
-		SQLPassword:   cfg.SQLPassword,
 		SQLUseMSI:     cfg.IsProduction(), // Use MSI in production
 		SQLConnString: cfg.SQLConnectionString,
 
 		// Cosmos DB (from Key Vault or env)
 		CosmosEndpoint: cfg.CosmosDBEndpoint,
-		CosmosKey:      cfg.CosmosDBKey,
 		CosmosDatabase: cfg.CosmosDBDatabase,
 
 		// Redis (from Key Vault or env)
-		RedisHost:     redisAddr,
+		RedisHost:     cfg.RedisHost,
 		RedisPassword: cfg.RedisPassword,
 		RedisDB:       0,
 

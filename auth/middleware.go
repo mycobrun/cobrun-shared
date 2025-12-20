@@ -163,8 +163,3 @@ func GetUserIDFromContext(ctx context.Context) string {
 	}
 	return userID
 }
-
-// GetClaims is an alias for GetClaimsFromContext.
-func GetClaims(ctx context.Context) *Claims {
-	return GetClaimsFromContext(ctx)
-}
