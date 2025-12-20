@@ -372,3 +372,15 @@ func (c *SignalRClient) RemoveFromTripGroup(ctx context.Context, tripID, userID 
 	groupName := fmt.Sprintf("trip-%s", tripID)
 	return c.RemoveUserFromGroup(ctx, userID, groupName)
 }
+
+// SendToUserWithTarget sends a message to a user with a specific target method.
+func (c *SignalRClient) SendToUserWithTarget(ctx context.Context, userID, target string, data interface{}) error {
+	msg := NewSignalRMessage(target, data)
+	return c.SendToUser(ctx, userID, msg)
+}
+
+// SendToGroupWithTarget sends a message to a group with a specific target method.
+func (c *SignalRClient) SendToGroupWithTarget(ctx context.Context, groupName, target string, data interface{}) error {
+	msg := NewSignalRMessage(target, data)
+	return c.SendToGroup(ctx, groupName, msg)
+}

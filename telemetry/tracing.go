@@ -174,7 +174,7 @@ func HTTPServerAttributes(r *http.Request, statusCode int) []attribute.KeyValue 
 		semconv.HTTPRoute(r.URL.Path),
 		semconv.HTTPStatusCode(statusCode),
 		semconv.HTTPScheme(r.URL.Scheme),
-		semconv.HTTPClientIP(r.RemoteAddr),
+		attribute.String("client.address", r.RemoteAddr),
 		semconv.UserAgentOriginal(r.UserAgent()),
 	}
 }
@@ -200,9 +200,9 @@ func DatabaseAttributes(dbType, operation, table string) []attribute.KeyValue {
 // MessagingAttributes returns common messaging span attributes.
 func MessagingAttributes(system, destination, operation string) []attribute.KeyValue {
 	return []attribute.KeyValue{
-		semconv.MessagingSystem(system),
+		attribute.String("messaging.system", system),
 		semconv.MessagingDestinationName(destination),
-		semconv.MessagingOperationName(operation),
+		attribute.String("messaging.operation.name", operation),
 	}
 }
 
@@ -257,7 +257,7 @@ func TracingMiddleware(tracer trace.Tracer) func(http.Handler) http.Handler {
 					semconv.HTTPMethod(r.Method),
 					semconv.HTTPURL(r.URL.String()),
 					semconv.HTTPRoute(r.URL.Path),
-					semconv.HTTPClientIP(r.RemoteAddr),
+					attribute.String("client.address", r.RemoteAddr),
 					semconv.UserAgentOriginal(r.UserAgent()),
 				),
 			)

@@ -18,19 +18,21 @@ type Server struct {
 
 // ServerConfig holds server configuration.
 type ServerConfig struct {
-	Port         int
-	ReadTimeout  time.Duration
-	WriteTimeout time.Duration
-	IdleTimeout  time.Duration
+	Port            int
+	ReadTimeout     time.Duration
+	WriteTimeout    time.Duration
+	IdleTimeout     time.Duration
+	ShutdownTimeout time.Duration
 }
 
 // DefaultServerConfig returns default server configuration.
 func DefaultServerConfig() ServerConfig {
 	return ServerConfig{
-		Port:         8080,
-		ReadTimeout:  30 * time.Second,
-		WriteTimeout: 30 * time.Second,
-		IdleTimeout:  60 * time.Second,
+		Port:            8080,
+		ReadTimeout:     30 * time.Second,
+		WriteTimeout:    30 * time.Second,
+		IdleTimeout:     60 * time.Second,
+		ShutdownTimeout: 30 * time.Second,
 	}
 }
 

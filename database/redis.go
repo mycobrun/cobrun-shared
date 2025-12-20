@@ -108,6 +108,11 @@ func (r *RedisClient) Delete(ctx context.Context, keys ...string) error {
 	return r.client.Del(ctx, keys...).Err()
 }
 
+// Del is an alias for Delete.
+func (r *RedisClient) Del(ctx context.Context, keys ...string) error {
+	return r.Delete(ctx, keys...)
+}
+
 // Exists checks if keys exist.
 func (r *RedisClient) Exists(ctx context.Context, keys ...string) (int64, error) {
 	return r.client.Exists(ctx, keys...).Result()
@@ -169,6 +174,11 @@ func (r *RedisClient) HDel(ctx context.Context, key string, fields ...string) er
 	return r.client.HDel(ctx, key, fields...).Err()
 }
 
+// HIncrBy increments a hash field by a specific amount.
+func (r *RedisClient) HIncrBy(ctx context.Context, key, field string, incr int64) (int64, error) {
+	return r.client.HIncrBy(ctx, key, field, incr).Result()
+}
+
 // Geo operations (for location tracking)
 
 // GeoAdd adds a geospatial item.
@@ -211,6 +221,20 @@ func (r *RedisClient) ZRangeByScore(ctx context.Context, key string, opt *redis.
 // ZRem removes members from a sorted set.
 func (r *RedisClient) ZRem(ctx context.Context, key string, members ...interface{}) error {
 	return r.client.ZRem(ctx, key, members...).Err()
+}
+
+// ZRank returns the rank of a member in a sorted set.
+func (r *RedisClient) ZRank(ctx context.Context, key, member string) (int64, error) {
+	rank, err := r.client.ZRank(ctx, key, member).Result()
+	if err == redis.Nil {
+		return -1, ErrKeyNotFound
+	}
+	return rank, err
+}
+
+// ZCard returns the number of elements in a sorted set.
+func (r *RedisClient) ZCard(ctx context.Context, key string) (int64, error) {
+	return r.client.ZCard(ctx, key).Result()
 }
 
 // List operations (for queues)

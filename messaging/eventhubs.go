@@ -223,6 +223,23 @@ func WithPartitionKey(key string) EventOption {
 	}
 }
 
+// StartPosition is the starting position for reading events.
+type StartPosition = azeventhubs.StartPosition
+
+// StartPositionLatest returns a position that starts from the latest event.
+func StartPositionLatest() azeventhubs.StartPosition {
+	return azeventhubs.StartPosition{Latest: toPtr(true)}
+}
+
+// StartPositionEarliest returns a position that starts from the earliest event.
+func StartPositionEarliest() azeventhubs.StartPosition {
+	return azeventhubs.StartPosition{Earliest: toPtr(true)}
+}
+
+func toPtr[T any](v T) *T {
+	return &v
+}
+
 // ReceivedEvent represents a received event.
 type ReceivedEvent struct {
 	Body             []byte
@@ -352,8 +369,8 @@ func (c *EventHubsConsumer) processPartition(ctx context.Context, partitionClien
 			receivedEvent := &ReceivedEvent{
 				Body:           event.Body,
 				EnqueuedTime:   *event.EnqueuedTime,
-				SequenceNumber: *event.SequenceNumber,
-				Offset:         *event.Offset,
+				SequenceNumber: event.SequenceNumber,
+				Offset:         event.Offset,
 				PartitionID:    partitionClient.PartitionID(),
 			}
 
@@ -471,12 +488,8 @@ func (c *SimpleEventHubsConsumer) ReceiveFromPartition(ctx context.Context, part
 		if event.EnqueuedTime != nil {
 			result[i].EnqueuedTime = *event.EnqueuedTime
 		}
-		if event.SequenceNumber != nil {
-			result[i].SequenceNumber = *event.SequenceNumber
-		}
-		if event.Offset != nil {
-			result[i].Offset = *event.Offset
-		}
+		result[i].SequenceNumber = event.SequenceNumber
+		result[i].Offset = event.Offset
 		if event.ContentType != nil {
 			result[i].ContentType = *event.ContentType
 		}

@@ -9,7 +9,6 @@ import (
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
 	"go.opentelemetry.io/otel/metric"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
@@ -34,22 +33,6 @@ type MetricsProvider struct {
 
 // NewMetricsProvider creates a new metrics provider.
 func NewMetricsProvider(ctx context.Context, config MetricsConfig) (*MetricsProvider, error) {
-	// Create OTLP exporter
-	opts := []otlpmetrichttp.Option{}
-
-	if config.Endpoint != "" {
-		opts = append(opts, otlpmetrichttp.WithEndpoint(config.Endpoint))
-	}
-
-	if config.Insecure {
-		opts = append(opts, otlpmetrichttp.WithInsecure())
-	}
-
-	exporter, err := otlpmetrichttp.New(ctx, opts...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create metrics exporter: %w", err)
-	}
-
 	// Create resource
 	res, err := resource.New(ctx,
 		resource.WithAttributes(
@@ -62,13 +45,8 @@ func NewMetricsProvider(ctx context.Context, config MetricsConfig) (*MetricsProv
 		return nil, fmt.Errorf("failed to create resource: %w", err)
 	}
 
-	// Create meter provider
+	// Create meter provider with periodic reader (no-op for now, can be configured with exporters)
 	provider := sdkmetric.NewMeterProvider(
-		sdkmetric.WithReader(
-			sdkmetric.NewPeriodicReader(exporter,
-				sdkmetric.WithInterval(30*time.Second),
-			),
-		),
 		sdkmetric.WithResource(res),
 	)
 
@@ -207,7 +185,7 @@ func statusClass(status int) string {
 type DatabaseMetrics struct {
 	operationsTotal    metric.Int64Counter
 	operationDuration  metric.Float64Histogram
-	connectionPoolSize metric.Int64Gauge
+	connectionPoolSize metric.Int64UpDownCounter
 	errorsTotal        metric.Int64Counter
 }
 
@@ -234,7 +212,7 @@ func NewDatabaseMetrics(meter metric.Meter, dbType string) (*DatabaseMetrics, er
 		return nil, err
 	}
 
-	connectionPoolSize, err := meter.Int64Gauge(
+	connectionPoolSize, err := meter.Int64UpDownCounter(
 		prefix+"_connection_pool_size",
 		metric.WithDescription("Current database connection pool size"),
 		metric.WithUnit("{connections}"),
@@ -276,7 +254,7 @@ func (m *DatabaseMetrics) RecordOperation(ctx context.Context, operation string,
 
 // RecordPoolSize records the connection pool size.
 func (m *DatabaseMetrics) RecordPoolSize(ctx context.Context, size int64) {
-	m.connectionPoolSize.Record(ctx, size)
+	m.connectionPoolSize.Add(ctx, size)
 }
 
 // BusinessMetrics provides business-specific metrics for rideshare.
@@ -289,7 +267,7 @@ type BusinessMetrics struct {
 	tripFare         metric.Float64Histogram
 	driversOnline    metric.Int64UpDownCounter
 	ridersActive     metric.Int64UpDownCounter
-	surgeMultiplier  metric.Float64Gauge
+	surgeMultiplier  metric.Float64Histogram
 	etaAccuracy      metric.Float64Histogram
 }
 
@@ -365,9 +343,10 @@ func NewBusinessMetrics(meter metric.Meter) (*BusinessMetrics, error) {
 		return nil, err
 	}
 
-	surgeMultiplier, err := meter.Float64Gauge(
+	surgeMultiplier, err := meter.Float64Histogram(
 		"surge_multiplier",
 		metric.WithDescription("Current surge pricing multiplier"),
+		metric.WithExplicitBucketBoundaries(1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 4.0, 5.0),
 	)
 	if err != nil {
 		return nil, err

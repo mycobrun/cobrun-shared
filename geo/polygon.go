@@ -212,6 +212,26 @@ func PolygonFromJSON(data []byte) (*Polygon, error) {
 	return &p, nil
 }
 
+// PointInPolygon checks if a point is inside a polygon.
+// This is a convenience function that wraps Polygon.Contains.
+func PointInPolygon(point Point, polygon interface{}) bool {
+	switch p := polygon.(type) {
+	case *Polygon:
+		if p == nil {
+			return false
+		}
+		return p.Contains(point)
+	case []Point:
+		if len(p) < 3 {
+			return false
+		}
+		poly := &Polygon{Points: p}
+		return poly.Contains(point)
+	default:
+		return false
+	}
+}
+
 // Geofence operations
 
 // Geofence represents a named geographic boundary.

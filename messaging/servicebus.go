@@ -126,7 +126,7 @@ func (p *Publisher) SendJSON(ctx context.Context, id string, data interface{}, o
 		ID:          id,
 		Body:        body,
 		ContentType: "application/json",
-		Properties:  make(map[string]string),
+		Properties:  make(map[string]interface{}),
 	}
 
 	for _, opt := range opts {
@@ -283,7 +283,7 @@ type Message struct {
 	Subject              string
 	SessionID            string
 	ScheduledEnqueueTime *time.Time
-	Properties           map[string]string
+	Properties           map[string]interface{}
 }
 
 // MessageOption configures a message.
@@ -311,10 +311,10 @@ func WithSessionID(sessionID string) MessageOption {
 }
 
 // WithProperty sets a custom property.
-func WithProperty(key, value string) MessageOption {
+func WithProperty(key string, value interface{}) MessageOption {
 	return func(m *Message) {
 		if m.Properties == nil {
-			m.Properties = make(map[string]string)
+			m.Properties = make(map[string]interface{})
 		}
 		m.Properties[key] = value
 	}
@@ -346,9 +346,7 @@ func fromServiceBusMessage(msg *azservicebus.ReceivedMessage) Message {
 		Body: msg.Body,
 	}
 
-	if msg.MessageID != nil {
-		m.ID = *msg.MessageID
-	}
+	m.ID = msg.MessageID
 	if msg.ContentType != nil {
 		m.ContentType = *msg.ContentType
 	}
@@ -363,11 +361,9 @@ func fromServiceBusMessage(msg *azservicebus.ReceivedMessage) Message {
 	}
 
 	if msg.ApplicationProperties != nil {
-		m.Properties = make(map[string]string)
+		m.Properties = make(map[string]interface{})
 		for k, v := range msg.ApplicationProperties {
-			if s, ok := v.(string); ok {
-				m.Properties[k] = s
-			}
+			m.Properties[k] = v
 		}
 	}
 
@@ -410,4 +406,53 @@ func (c *Consumer) StartConsumer(ctx context.Context, handler MessageHandler, ma
 			}(msg)
 		}
 	}
+}
+
+// SimpleMessageHandler is a simplified message handler that doesn't require context.
+type SimpleMessageHandler func(msg *Message) error
+
+// Subscribe creates a subscription consumer and starts processing messages.
+func (c *ServiceBusClient) Subscribe(ctx context.Context, topicName, subscriptionName string, handler SimpleMessageHandler) error {
+	consumer, err := c.NewSubscriptionConsumer(topicName, subscriptionName, nil)
+	if err != nil {
+		return err
+	}
+	// Wrap the simple handler to match the full MessageHandler signature
+	fullHandler := func(ctx context.Context, msg *ReceivedMessage) error {
+		return handler(&msg.Message)
+	}
+	return consumer.StartConsumer(ctx, fullHandler, 10)
+}
+
+// ReceiveFromQueue receives messages from a queue with a handler callback.
+func (c *ServiceBusClient) ReceiveFromQueue(ctx context.Context, queueName string, handler SimpleMessageHandler) error {
+	consumer, err := c.NewQueueConsumer(queueName, nil)
+	if err != nil {
+		return err
+	}
+	// Wrap the simple handler to match the full MessageHandler signature
+	fullHandler := func(ctx context.Context, msg *ReceivedMessage) error {
+		return handler(&msg.Message)
+	}
+	return consumer.StartConsumer(ctx, fullHandler, 10)
+}
+
+// ReceiveMessagesFromQueue receives a batch of messages from a queue.
+func (c *ServiceBusClient) ReceiveMessagesFromQueue(ctx context.Context, queueName string, maxMessages int) ([]*ReceivedMessage, error) {
+	consumer, err := c.NewQueueConsumer(queueName, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer consumer.Close(ctx)
+	return consumer.Receive(ctx, maxMessages)
+}
+
+// PublishToTopic publishes a message to a topic.
+func (c *ServiceBusClient) PublishToTopic(ctx context.Context, topicName string, msg *Message) error {
+	publisher, err := c.NewTopicPublisher(topicName)
+	if err != nil {
+		return err
+	}
+	defer publisher.Close(ctx)
+	return publisher.Send(ctx, msg)
 }

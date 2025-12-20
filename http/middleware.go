@@ -25,19 +25,10 @@ func RequestID(next http.Handler) http.Handler {
 		}
 
 		w.Header().Set("X-Request-ID", requestID)
-		ctx := r.Context()
-		ctx = middleware.WithLogEntry(ctx, &requestIDEntry{requestID: requestID})
-		next.ServeHTTP(w, r.WithContext(ctx))
+		next.ServeHTTP(w, r)
 	})
 }
 
-type requestIDEntry struct {
-	requestID string
-}
-
-func (e *requestIDEntry) Write(status, bytes int, header http.Header, elapsed time.Duration, extra interface{}) {
-}
-func (e *requestIDEntry) Panic(v interface{}, stack []byte) {}
 
 // CORS middleware adds CORS headers.
 func CORS(allowedOrigins []string) func(http.Handler) http.Handler {

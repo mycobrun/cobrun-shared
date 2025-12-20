@@ -188,3 +188,37 @@ func getEnvDuration(key string, defaultValue time.Duration) time.Duration {
 	}
 	return defaultValue
 }
+
+func getEnvFloat(key string, defaultValue float64) float64 {
+	if value := os.Getenv(key); value != "" {
+		if f, err := strconv.ParseFloat(value, 64); err == nil {
+			return f
+		}
+	}
+	return defaultValue
+}
+
+// GetEnv gets an environment variable with a default value.
+func GetEnv(key, defaultValue string) string {
+	return getEnv(key, defaultValue)
+}
+
+// GetEnvInt gets an environment variable as an integer with a default value.
+func GetEnvInt(key string, defaultValue int) int {
+	return getEnvInt(key, defaultValue)
+}
+
+// GetEnvBool gets an environment variable as a boolean with a default value.
+func GetEnvBool(key string, defaultValue bool) bool {
+	return getEnvBool(key, defaultValue)
+}
+
+// GetEnvDuration gets an environment variable as a duration with a default value.
+func GetEnvDuration(key string, defaultValue time.Duration) time.Duration {
+	return getEnvDuration(key, defaultValue)
+}
+
+// GetEnvFloat gets an environment variable as a float with a default value.
+func GetEnvFloat(key string, defaultValue float64) float64 {
+	return getEnvFloat(key, defaultValue)
+}

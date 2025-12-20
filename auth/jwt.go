@@ -13,9 +13,28 @@ import (
 type Claims struct {
 	UserID   string   `json:"user_id"`
 	Email    string   `json:"email"`
-	UserType string   `json:"user_type"` // rider, driver, admin
+	Name     string   `json:"name,omitempty"` // Display name
+	UserType string   `json:"user_type"`      // rider, driver, admin
 	Roles    []string `json:"roles,omitempty"`
 	jwt.RegisteredClaims
+}
+
+// Role returns the primary role (first role in the slice) or empty string if no roles.
+func (c *Claims) Role() string {
+	if len(c.Roles) > 0 {
+		return c.Roles[0]
+	}
+	return ""
+}
+
+// HasRole checks if the claims include a specific role.
+func (c *Claims) HasRole(role string) bool {
+	for _, r := range c.Roles {
+		if r == role {
+			return true
+		}
+	}
+	return false
 }
 
 // JWTConfig holds JWT configuration.
