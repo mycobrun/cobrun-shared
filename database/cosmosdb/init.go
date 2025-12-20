@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos"
 )
@@ -70,13 +71,13 @@ func DefaultDatabaseConfig() *DatabaseConfig {
 // defaultIndexingPolicy returns the default indexing policy.
 func defaultIndexingPolicy() *azcosmos.IndexingPolicy {
 	return &azcosmos.IndexingPolicy{
-		IndexingMode: to(azcosmos.IndexingModeConsistent),
-		Automatic:    to(true),
+		IndexingMode: azcosmos.IndexingModeConsistent,
+		Automatic:    true,
 		IncludedPaths: []azcosmos.IncludedPath{
-			{Path: to("/*")},
+			{Path: "/*"},
 		},
 		ExcludedPaths: []azcosmos.ExcludedPath{
-			{Path: to("/_etag/?")},
+			{Path: "/_etag/?"},
 		},
 	}
 }
@@ -84,26 +85,19 @@ func defaultIndexingPolicy() *azcosmos.IndexingPolicy {
 // locationIndexingPolicy returns an optimized indexing policy for location data.
 func locationIndexingPolicy() *azcosmos.IndexingPolicy {
 	return &azcosmos.IndexingPolicy{
-		IndexingMode: to(azcosmos.IndexingModeConsistent),
-		Automatic:    to(true),
+		IndexingMode: azcosmos.IndexingModeConsistent,
+		Automatic:    true,
 		IncludedPaths: []azcosmos.IncludedPath{
-			{Path: to("/driver_id/?")},
-			{Path: to("/status/?")},
-			{Path: to("/city/?")},
-			{Path: to("/geohash/?")},
-			{Path: to("/updated_at/?")},
+			{Path: "/driver_id/?"},
+			{Path: "/status/?"},
+			{Path: "/city/?"},
+			{Path: "/geohash/?"},
+			{Path: "/updated_at/?"},
+			{Path: "/location/?"},
 		},
 		ExcludedPaths: []azcosmos.ExcludedPath{
-			{Path: to("/*")},
-			{Path: to("/_etag/?")},
-		},
-		SpatialIndexes: []azcosmos.SpatialSpec{
-			{
-				Path: to("/location/?"),
-				Types: []azcosmos.SpatialType{
-					azcosmos.SpatialTypePoint,
-				},
-			},
+			{Path: "/*"},
+			{Path: "/_etag/?"},
 		},
 	}
 }
@@ -111,17 +105,17 @@ func locationIndexingPolicy() *azcosmos.IndexingPolicy {
 // eventIndexingPolicy returns an optimized indexing policy for events.
 func eventIndexingPolicy() *azcosmos.IndexingPolicy {
 	return &azcosmos.IndexingPolicy{
-		IndexingMode: to(azcosmos.IndexingModeConsistent),
-		Automatic:    to(true),
+		IndexingMode: azcosmos.IndexingModeConsistent,
+		Automatic:    true,
 		IncludedPaths: []azcosmos.IncludedPath{
-			{Path: to("/type/?")},
-			{Path: to("/entity_id/?")},
-			{Path: to("/entity_type/?")},
-			{Path: to("/timestamp/?")},
+			{Path: "/type/?"},
+			{Path: "/entity_id/?"},
+			{Path: "/entity_type/?"},
+			{Path: "/timestamp/?"},
 		},
 		ExcludedPaths: []azcosmos.ExcludedPath{
-			{Path: to("/*")},
-			{Path: to("/_etag/?")},
+			{Path: "/*"},
+			{Path: "/_etag/?"},
 		},
 	}
 }
@@ -241,11 +235,9 @@ func isConflictError(err error) bool {
 	if err == nil {
 		return false
 	}
-	// Check for 409 Conflict status code
-	if respErr, ok := err.(*azcosmos.ResponseError); ok {
-		return respErr.StatusCode == 409
-	}
-	return false
+	// Check for 409 Conflict status code by checking error message
+	errMsg := err.Error()
+	return strings.Contains(errMsg, "409") || strings.Contains(errMsg, "Conflict") || strings.Contains(errMsg, "already exists")
 }
 
 // Helper function to get pointer to value

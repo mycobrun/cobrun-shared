@@ -346,8 +346,8 @@ func fromServiceBusMessage(msg *azservicebus.ReceivedMessage) Message {
 		Body: msg.Body,
 	}
 
-	if msg.MessageID != nil {
-		m.ID = *msg.MessageID
+	if msg.MessageID != "" {
+		m.ID = msg.MessageID
 	}
 	if msg.ContentType != nil {
 		m.ContentType = *msg.ContentType

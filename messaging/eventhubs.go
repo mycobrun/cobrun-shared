@@ -352,8 +352,8 @@ func (c *EventHubsConsumer) processPartition(ctx context.Context, partitionClien
 			receivedEvent := &ReceivedEvent{
 				Body:           event.Body,
 				EnqueuedTime:   *event.EnqueuedTime,
-				SequenceNumber: *event.SequenceNumber,
-				Offset:         *event.Offset,
+				SequenceNumber: event.SequenceNumber,
+				Offset:         event.Offset,
 				PartitionID:    partitionClient.PartitionID(),
 			}
 
@@ -471,12 +471,8 @@ func (c *SimpleEventHubsConsumer) ReceiveFromPartition(ctx context.Context, part
 		if event.EnqueuedTime != nil {
 			result[i].EnqueuedTime = *event.EnqueuedTime
 		}
-		if event.SequenceNumber != nil {
-			result[i].SequenceNumber = *event.SequenceNumber
-		}
-		if event.Offset != nil {
-			result[i].Offset = *event.Offset
-		}
+		result[i].SequenceNumber = event.SequenceNumber
+		result[i].Offset = event.Offset
 		if event.ContentType != nil {
 			result[i].ContentType = *event.ContentType
 		}

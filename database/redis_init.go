@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"time"
+
+	"github.com/redis/go-redis/v9"
 )
 
 // RedisKeyPatterns defines the key patterns used in the application.
@@ -205,13 +207,26 @@ func NewDriverLocationService(client *RedisClient) *DriverLocationService {
 // UpdateLocation updates a driver's location.
 func (s *DriverLocationService) UpdateLocation(ctx context.Context, driverID, city string, lat, lng float64) error {
 	key := fmt.Sprintf(RedisKeyPatterns.DriverLocations, city)
-	return s.client.GeoAdd(ctx, key, lng, lat, driverID)
+	location := &redis.GeoLocation{
+		Name:      driverID,
+		Longitude: lng,
+		Latitude:  lat,
+	}
+	return s.client.GeoAdd(ctx, key, location)
 }
 
 // GetNearbyDrivers finds drivers near a location.
-func (s *DriverLocationService) GetNearbyDrivers(ctx context.Context, city string, lat, lng, radiusKm float64) ([]GeoResult, error) {
+func (s *DriverLocationService) GetNearbyDrivers(ctx context.Context, city string, lat, lng, radiusKm float64) ([]redis.GeoLocation, error) {
 	key := fmt.Sprintf(RedisKeyPatterns.DriverLocations, city)
-	return s.client.GeoRadius(ctx, key, lng, lat, radiusKm, "km", true, true, true, 50)
+	query := &redis.GeoRadiusQuery{
+		Radius:      radiusKm,
+		Unit:        "km",
+		WithCoord:   true,
+		WithDist:    true,
+		WithGeoHash: true,
+		Count:       50,
+	}
+	return s.client.GeoRadius(ctx, key, lng, lat, query)
 }
 
 // RemoveDriver removes a driver from location tracking.
@@ -223,14 +238,15 @@ func (s *DriverLocationService) RemoveDriver(ctx context.Context, driverID, city
 // SetDriverOnline marks a driver as online.
 func (s *DriverLocationService) SetDriverOnline(ctx context.Context, driverID, city string) error {
 	key := fmt.Sprintf(RedisKeyPatterns.OnlineDrivers, city)
-	return s.client.SAdd(ctx, key, driverID)
+	_, err := s.client.SAdd(ctx, key, driverID)
+	return err
 }
 
 // SetDriverOffline marks a driver as offline.
 func (s *DriverLocationService) SetDriverOffline(ctx context.Context, driverID, city string) error {
 	// Remove from online drivers set
 	key := fmt.Sprintf(RedisKeyPatterns.OnlineDrivers, city)
-	_ = s.client.SRem(ctx, key, driverID)
+	_, _ = s.client.SRem(ctx, key, driverID)
 
 	// Remove from location geo set
 	return s.RemoveDriver(ctx, driverID, city)

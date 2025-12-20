@@ -129,13 +129,12 @@ func NewConnections(ctx context.Context, config *ConnectionConfig) (*Connections
 	// Connect to SQL Server if configured
 	if config.SQLHost != "" || config.SQLConnString != "" {
 		sqlConfig := SQLConfig{
-			Host:             config.SQLHost,
-			Port:             config.SQLPort,
-			Database:         config.SQLDatabase,
-			User:             config.SQLUser,
-			Password:         config.SQLPassword,
-			UseMSI:           config.SQLUseMSI,
-			ConnectionString: config.SQLConnString,
+			Host:     config.SQLHost,
+			Port:     config.SQLPort,
+			Database: config.SQLDatabase,
+			User:     config.SQLUser,
+			Password: config.SQLPassword,
+			UseMSI:   config.SQLUseMSI,
 		}
 
 		var err error
@@ -158,9 +157,9 @@ func NewConnections(ctx context.Context, config *ConnectionConfig) (*Connections
 	// Connect to Cosmos DB if configured
 	if config.CosmosEndpoint != "" {
 		cosmosConfig := CosmosConfig{
-			Endpoint: config.CosmosEndpoint,
-			Key:      config.CosmosKey,
-			Database: config.CosmosDatabase,
+			Endpoint:     config.CosmosEndpoint,
+			Key:          config.CosmosKey,
+			DatabaseName: config.CosmosDatabase,
 		}
 
 		var err error
