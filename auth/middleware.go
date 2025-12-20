@@ -150,6 +150,11 @@ func GetClaimsFromContext(ctx context.Context) *Claims {
 	return claims
 }
 
+// GetClaims is an alias for GetClaimsFromContext for convenience.
+func GetClaims(ctx context.Context) *Claims {
+	return GetClaimsFromContext(ctx)
+}
+
 // GetUserIDFromContext retrieves user ID from context.
 func GetUserIDFromContext(ctx context.Context) string {
 	userID, ok := ctx.Value(UserIDContextKey).(string)
