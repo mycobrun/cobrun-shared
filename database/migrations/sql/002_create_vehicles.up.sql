@@ -29,3 +29,4 @@ CREATE INDEX idx_vehicles_license_plate ON vehicles(license_plate);
 CREATE INDEX idx_vehicles_status ON vehicles(status);
 CREATE INDEX idx_vehicles_vehicle_type ON vehicles(vehicle_type);
 
+

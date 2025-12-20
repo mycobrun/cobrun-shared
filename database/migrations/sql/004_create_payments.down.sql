@@ -24,3 +24,4 @@ DROP INDEX IF EXISTS idx_payment_methods_is_default;
 DROP INDEX IF EXISTS idx_payment_methods_user_id;
 DROP TABLE IF EXISTS payment_methods;
 
+

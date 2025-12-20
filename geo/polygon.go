@@ -279,3 +279,12 @@ func (gc *GeofenceCollection) IsInServiceArea(point Point) bool {
 	}
 	return false
 }
+
+// PointInPolygon checks if a point is inside a polygon using ray casting algorithm.
+// This is a convenience function that wraps Polygon.Contains().
+func PointInPolygon(point Point, polygon *Polygon) bool {
+	if polygon == nil {
+		return false
+	}
+	return polygon.Contains(point)
+}

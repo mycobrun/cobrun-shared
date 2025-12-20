@@ -27,3 +27,4 @@ CREATE TABLE schema_migrations (
     applied_at              DATETIME2 NOT NULL DEFAULT GETUTCDATE()
 );
 
+

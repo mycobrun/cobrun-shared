@@ -120,3 +120,4 @@ CREATE INDEX idx_driver_payouts_driver_id ON driver_payouts(driver_id);
 CREATE INDEX idx_driver_payouts_status ON driver_payouts(status);
 CREATE INDEX idx_driver_payouts_created_at ON driver_payouts(created_at);
 
+

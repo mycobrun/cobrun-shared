@@ -66,3 +66,4 @@ CREATE TABLE user_rating_summaries (
     CONSTRAINT fk_user_rating_summaries_user FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
+
