@@ -19,3 +19,4 @@ DROP INDEX IF EXISTS idx_risk_assessments_risk_level;
 DROP INDEX IF EXISTS idx_risk_assessments_entity;
 DROP TABLE IF EXISTS risk_assessments;
 
+

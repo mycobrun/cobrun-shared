@@ -89,3 +89,4 @@ CREATE TABLE support_agents (
 CREATE INDEX idx_support_agents_team ON support_agents(team);
 CREATE INDEX idx_support_agents_is_available ON support_agents(is_available);
 
+

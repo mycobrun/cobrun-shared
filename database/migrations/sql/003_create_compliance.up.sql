@@ -85,3 +85,4 @@ CREATE TABLE driver_onboarding (
 CREATE INDEX idx_driver_onboarding_user_id ON driver_onboarding(user_id);
 CREATE INDEX idx_driver_onboarding_status ON driver_onboarding(status);
 
+

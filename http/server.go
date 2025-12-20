@@ -12,30 +12,37 @@ import (
 
 // Server wraps an HTTP server with graceful shutdown.
 type Server struct {
-	server *http.Server
-	logger *logging.Logger
+	server          *http.Server
+	logger          *logging.Logger
+	shutdownTimeout time.Duration
 }
 
 // ServerConfig holds server configuration.
 type ServerConfig struct {
-	Port         int
-	ReadTimeout  time.Duration
-	WriteTimeout time.Duration
-	IdleTimeout  time.Duration
+	Port            int
+	ReadTimeout     time.Duration
+	WriteTimeout    time.Duration
+	IdleTimeout     time.Duration
+	ShutdownTimeout time.Duration
 }
 
 // DefaultServerConfig returns default server configuration.
 func DefaultServerConfig() ServerConfig {
 	return ServerConfig{
-		Port:         8080,
-		ReadTimeout:  30 * time.Second,
-		WriteTimeout: 30 * time.Second,
-		IdleTimeout:  60 * time.Second,
+		Port:            8080,
+		ReadTimeout:     30 * time.Second,
+		WriteTimeout:    30 * time.Second,
+		IdleTimeout:     60 * time.Second,
+		ShutdownTimeout: 30 * time.Second,
 	}
 }
 
 // NewServer creates a new HTTP server.
 func NewServer(config ServerConfig, handler http.Handler, logger *logging.Logger) *Server {
+	shutdownTimeout := config.ShutdownTimeout
+	if shutdownTimeout == 0 {
+		shutdownTimeout = 30 * time.Second
+	}
 	return &Server{
 		server: &http.Server{
 			Addr:         fmt.Sprintf(":%d", config.Port),
@@ -44,7 +51,8 @@ func NewServer(config ServerConfig, handler http.Handler, logger *logging.Logger
 			WriteTimeout: config.WriteTimeout,
 			IdleTimeout:  config.IdleTimeout,
 		},
-		logger: logger,
+		logger:          logger,
+		shutdownTimeout: shutdownTimeout,
 	}
 }
 
@@ -71,7 +79,7 @@ func (s *Server) Run(ctx context.Context) error {
 
 // shutdown gracefully shuts down the server.
 func (s *Server) shutdown() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), s.shutdownTimeout)
 	defer cancel()
 
 	if err := s.server.Shutdown(ctx); err != nil {

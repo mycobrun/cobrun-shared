@@ -20,3 +20,4 @@ DROP INDEX IF EXISTS idx_support_tickets_trip_id;
 DROP INDEX IF EXISTS idx_support_tickets_user_id;
 DROP TABLE IF EXISTS support_tickets;
 
+

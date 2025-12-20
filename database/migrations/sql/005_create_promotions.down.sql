@@ -24,3 +24,4 @@ DROP INDEX IF EXISTS idx_promotions_status;
 DROP INDEX IF EXISTS idx_promotions_code;
 DROP TABLE IF EXISTS promotions;
 
+

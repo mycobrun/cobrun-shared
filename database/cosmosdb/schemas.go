@@ -265,3 +265,4 @@ func (g GeoPoint) Lng() float64 {
 	return 0
 }
 
+

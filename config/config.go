@@ -18,10 +18,11 @@ type Config struct {
 	Version     string
 
 	// HTTP server
-	Port         int
-	ReadTimeout  time.Duration
-	WriteTimeout time.Duration
-	IdleTimeout  time.Duration
+	Port            int
+	ReadTimeout     time.Duration
+	WriteTimeout    time.Duration
+	IdleTimeout     time.Duration
+	ShutdownTimeout time.Duration
 
 	// Logging
 	LogLevel string
@@ -72,10 +73,11 @@ func Load(serviceName ...string) (*Config, error) {
 		ServiceName:  name,
 		Environment:  getEnv("ENVIRONMENT", "development"),
 		Version:      getEnv("VERSION", "0.0.1"),
-		Port:         getEnvInt("PORT", 8080),
-		ReadTimeout:  getEnvDuration("READ_TIMEOUT", 30*time.Second),
-		WriteTimeout: getEnvDuration("WRITE_TIMEOUT", 30*time.Second),
-		IdleTimeout:  getEnvDuration("IDLE_TIMEOUT", 60*time.Second),
+		Port:            getEnvInt("PORT", 8080),
+		ReadTimeout:     getEnvDuration("READ_TIMEOUT", 30*time.Second),
+		WriteTimeout:    getEnvDuration("WRITE_TIMEOUT", 30*time.Second),
+		IdleTimeout:     getEnvDuration("IDLE_TIMEOUT", 60*time.Second),
+		ShutdownTimeout: getEnvDuration("SHUTDOWN_TIMEOUT", 30*time.Second),
 		LogLevel:     getEnv("LOG_LEVEL", "info"),
 		KeyVaultName: getEnv("KEY_VAULT_NAME", ""),
 	}
