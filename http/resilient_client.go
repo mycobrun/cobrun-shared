@@ -84,16 +84,16 @@ type Request struct {
 	Headers map[string]string
 }
 
-// Response represents an HTTP response.
-type Response struct {
+// HTTPResponse represents an HTTP response from the resilient client.
+type HTTPResponse struct {
 	StatusCode int
 	Body       []byte
 	Headers    http.Header
 }
 
 // Do executes an HTTP request with circuit breaker and retry protection.
-func (c *ResilientClient) Do(ctx context.Context, req Request) (*Response, error) {
-	var response *Response
+func (c *ResilientClient) Do(ctx context.Context, req Request) (*HTTPResponse, error) {
+	var response *HTTPResponse
 	var lastErr error
 
 	err := c.circuitBreaker.Execute(ctx, func() error {
@@ -109,8 +109,8 @@ func (c *ResilientClient) Do(ctx context.Context, req Request) (*Response, error
 }
 
 // doWithRetry executes a request with retry logic.
-func (c *ResilientClient) doWithRetry(ctx context.Context, req Request) (*Response, error) {
-	var response *Response
+func (c *ResilientClient) doWithRetry(ctx context.Context, req Request) (*HTTPResponse, error) {
+	var response *HTTPResponse
 	var lastErr error
 
 	for attempt := 0; attempt <= c.config.RetryConfig.MaxRetries; attempt++ {
@@ -143,7 +143,7 @@ func (c *ResilientClient) doWithRetry(ctx context.Context, req Request) (*Respon
 }
 
 // doRequest executes a single HTTP request with tracing.
-func (c *ResilientClient) doRequest(ctx context.Context, req Request) (*Response, error) {
+func (c *ResilientClient) doRequest(ctx context.Context, req Request) (*HTTPResponse, error) {
 	url := c.config.BaseURL + req.Path
 
 	// Start span for the HTTP request
@@ -205,7 +205,7 @@ func (c *ResilientClient) doRequest(ctx context.Context, req Request) (*Response
 	// Record response status
 	span.SetAttributes(attribute.Int("http.status_code", resp.StatusCode))
 
-	response := &Response{
+	response := &HTTPResponse{
 		StatusCode: resp.StatusCode,
 		Body:       body,
 		Headers:    resp.Header,
@@ -225,7 +225,7 @@ func (c *ResilientClient) doRequest(ctx context.Context, req Request) (*Response
 }
 
 // isRetryable determines if a request should be retried.
-func (c *ResilientClient) isRetryable(err error, resp *Response) bool {
+func (c *ResilientClient) isRetryable(err error, resp *HTTPResponse) bool {
 	if err == nil {
 		return false
 	}
@@ -264,7 +264,7 @@ func (e *HTTPError) Error() string {
 }
 
 // Get performs a GET request.
-func (c *ResilientClient) Get(ctx context.Context, path string, headers map[string]string) (*Response, error) {
+func (c *ResilientClient) Get(ctx context.Context, path string, headers map[string]string) (*HTTPResponse, error) {
 	return c.Do(ctx, Request{
 		Method:  http.MethodGet,
 		Path:    path,
@@ -273,7 +273,7 @@ func (c *ResilientClient) Get(ctx context.Context, path string, headers map[stri
 }
 
 // Post performs a POST request.
-func (c *ResilientClient) Post(ctx context.Context, path string, body interface{}, headers map[string]string) (*Response, error) {
+func (c *ResilientClient) Post(ctx context.Context, path string, body interface{}, headers map[string]string) (*HTTPResponse, error) {
 	return c.Do(ctx, Request{
 		Method:  http.MethodPost,
 		Path:    path,
@@ -283,7 +283,7 @@ func (c *ResilientClient) Post(ctx context.Context, path string, body interface{
 }
 
 // Put performs a PUT request.
-func (c *ResilientClient) Put(ctx context.Context, path string, body interface{}, headers map[string]string) (*Response, error) {
+func (c *ResilientClient) Put(ctx context.Context, path string, body interface{}, headers map[string]string) (*HTTPResponse, error) {
 	return c.Do(ctx, Request{
 		Method:  http.MethodPut,
 		Path:    path,
@@ -293,7 +293,7 @@ func (c *ResilientClient) Put(ctx context.Context, path string, body interface{}
 }
 
 // Patch performs a PATCH request.
-func (c *ResilientClient) Patch(ctx context.Context, path string, body interface{}, headers map[string]string) (*Response, error) {
+func (c *ResilientClient) Patch(ctx context.Context, path string, body interface{}, headers map[string]string) (*HTTPResponse, error) {
 	return c.Do(ctx, Request{
 		Method:  http.MethodPatch,
 		Path:    path,
@@ -303,7 +303,7 @@ func (c *ResilientClient) Patch(ctx context.Context, path string, body interface
 }
 
 // Delete performs a DELETE request.
-func (c *ResilientClient) Delete(ctx context.Context, path string, headers map[string]string) (*Response, error) {
+func (c *ResilientClient) Delete(ctx context.Context, path string, headers map[string]string) (*HTTPResponse, error) {
 	return c.Do(ctx, Request{
 		Method:  http.MethodDelete,
 		Path:    path,

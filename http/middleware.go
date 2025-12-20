@@ -25,9 +25,8 @@ func RequestID(next http.Handler) http.Handler {
 		}
 
 		w.Header().Set("X-Request-ID", requestID)
-		ctx := r.Context()
-		ctx = middleware.WithLogEntry(ctx, &requestIDEntry{requestID: requestID})
-		next.ServeHTTP(w, r.WithContext(ctx))
+		r = middleware.WithLogEntry(r, &requestIDEntry{requestID: requestID})
+		next.ServeHTTP(w, r)
 	})
 }
 
