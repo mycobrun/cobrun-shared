@@ -216,6 +216,7 @@ func (c *CosmosContainer) QueryCrossPartition(ctx context.Context, query string,
 		})
 	}
 
+	// Use empty PartitionKey for cross-partition queries
 	pager := c.container.NewQueryItemsPager(query, azcosmos.PartitionKey{}, queryOptions)
 
 	var items []json.RawMessage

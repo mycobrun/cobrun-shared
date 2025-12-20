@@ -27,14 +27,15 @@ type Config struct {
 	LogLevel string
 
 	// Azure
-	KeyVaultName       string
-	AppInsightsKey     string
-	CosmosDBEndpoint   string
-	CosmosDBDatabase   string
-	ServiceBusNS       string
-	EventHubsNS        string
-	RedisHost          string
-	RedisPassword      string
+	KeyVaultName        string
+	AppInsightsKey      string
+	CosmosDBEndpoint    string
+	CosmosDBKey         string
+	CosmosDBDatabase    string
+	ServiceBusNS        string
+	EventHubsNS         string
+	RedisHost           string
+	RedisPassword       string
 	SQLConnectionString string
 
 	// JWT
@@ -82,8 +83,9 @@ func MustLoad(serviceName string) *Config {
 
 func (c *Config) loadFromEnv() {
 	c.AppInsightsKey = getEnv("APPINSIGHTS_INSTRUMENTATIONKEY", "")
-	c.CosmosDBEndpoint = getEnv("COSMOSDB_ENDPOINT", "")
-	c.CosmosDBDatabase = getEnv("COSMOSDB_DATABASE", "cobrun")
+	c.CosmosDBEndpoint = getEnvWithFallback("COSMOSDB_ENDPOINT", "COSMOS_DB_ENDPOINT", "")
+	c.CosmosDBKey = getEnvWithFallback("COSMOSDB_KEY", "COSMOS_DB_KEY", "")
+	c.CosmosDBDatabase = getEnvWithFallback("COSMOSDB_DATABASE", "COSMOS_DB_DATABASE", "cobrun")
 	c.ServiceBusNS = getEnv("SERVICEBUS_NAMESPACE", "")
 	c.EventHubsNS = getEnv("EVENTHUBS_NAMESPACE", "")
 	c.RedisHost = getEnv("REDIS_HOST", "localhost:6379")
@@ -110,6 +112,7 @@ func (c *Config) loadFromKeyVault(ctx context.Context) error {
 	secrets := map[string]*string{
 		"appinsights-key":       &c.AppInsightsKey,
 		"cosmosdb-endpoint":     &c.CosmosDBEndpoint,
+		"cosmosdb-key":          &c.CosmosDBKey,
 		"servicebus-namespace":  &c.ServiceBusNS,
 		"eventhubs-namespace":   &c.EventHubsNS,
 		"redis-host":            &c.RedisHost,
@@ -149,6 +152,17 @@ func (c *Config) IsProduction() bool {
 
 func getEnv(key, defaultValue string) string {
 	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
+}
+
+// getEnvWithFallback gets an environment variable with fallback to another key.
+func getEnvWithFallback(primary, fallback, defaultValue string) string {
+	if value := os.Getenv(primary); value != "" {
+		return value
+	}
+	if value := os.Getenv(fallback); value != "" {
 		return value
 	}
 	return defaultValue
