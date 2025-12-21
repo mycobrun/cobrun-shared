@@ -95,3 +95,55 @@ func PaginatedResponse(data interface{}, page, perPage int, total int64) Respons
 func Paginated(w http.ResponseWriter, data interface{}, page, perPage int, total int64) {
 	JSON(w, http.StatusOK, PaginatedResponse(data, page, perPage, total))
 }
+
+// ErrorResponse is a standard error response.
+type ErrorResponse struct {
+	Success bool   `json:"success"`
+	Error   string `json:"error"`
+}
+
+// BadRequest sends a 400 Bad Request response.
+func BadRequest(w http.ResponseWriter, message string) {
+	JSON(w, http.StatusBadRequest, ErrorResponse{Success: false, Error: message})
+}
+
+// Unauthorized sends a 401 Unauthorized response.
+func Unauthorized(w http.ResponseWriter, message string) {
+	JSON(w, http.StatusUnauthorized, ErrorResponse{Success: false, Error: message})
+}
+
+// Forbidden sends a 403 Forbidden response.
+func Forbidden(w http.ResponseWriter, message string) {
+	JSON(w, http.StatusForbidden, ErrorResponse{Success: false, Error: message})
+}
+
+// NotFound sends a 404 Not Found response.
+func NotFound(w http.ResponseWriter, message string) {
+	JSON(w, http.StatusNotFound, ErrorResponse{Success: false, Error: message})
+}
+
+// Conflict sends a 409 Conflict response.
+func Conflict(w http.ResponseWriter, message string) {
+	JSON(w, http.StatusConflict, ErrorResponse{Success: false, Error: message})
+}
+
+// TooManyRequests sends a 429 Too Many Requests response.
+func TooManyRequests(w http.ResponseWriter, message string) {
+	JSON(w, http.StatusTooManyRequests, ErrorResponse{Success: false, Error: message})
+}
+
+// InternalError sends a 500 Internal Server Error response.
+func InternalError(w http.ResponseWriter, message string) {
+	JSON(w, http.StatusInternalServerError, ErrorResponse{Success: false, Error: message})
+}
+
+// ParseInt parses a string to an int.
+func ParseInt(s string, v *int) (bool, error) {
+	var val int
+	err := json.Unmarshal([]byte(s), &val)
+	if err != nil {
+		return false, err
+	}
+	*v = val
+	return true, nil
+}

@@ -220,3 +220,23 @@ func getErrorMessage(e validator.FieldError) string {
 func ValidateVar(field interface{}, tag string) error {
 	return GetValidator().Var(field, tag)
 }
+
+// Validator wraps the go-playground validator for easier use.
+type Validator struct {
+	v *validator.Validate
+}
+
+// New creates a new Validator instance.
+func New() *Validator {
+	return &Validator{v: GetValidator()}
+}
+
+// Struct validates a struct.
+func (v *Validator) Struct(s interface{}) error {
+	return v.v.Struct(s)
+}
+
+// Var validates a single variable.
+func (v *Validator) Var(field interface{}, tag string) error {
+	return v.v.Var(field, tag)
+}

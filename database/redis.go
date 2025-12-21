@@ -3,6 +3,7 @@ package database
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -51,7 +52,9 @@ func NewRedisClient(ctx context.Context, config RedisConfig) (*RedisClient, erro
 	}
 
 	if config.TLSEnabled {
-		opts.TLSConfig = nil // Uses default TLS config
+		opts.TLSConfig = &tls.Config{
+			MinVersion: tls.VersionTLS12,
+		}
 	}
 
 	client := redis.NewClient(opts)
