@@ -11,3 +11,6 @@ DROP INDEX IF EXISTS idx_ratings_trip_id;
 DROP TABLE IF EXISTS ratings;
 
 
+
+
+

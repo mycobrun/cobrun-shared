@@ -20,3 +20,6 @@ DROP INDEX IF EXISTS idx_risk_assessments_entity;
 DROP TABLE IF EXISTS risk_assessments;
 
 
+
+
+
