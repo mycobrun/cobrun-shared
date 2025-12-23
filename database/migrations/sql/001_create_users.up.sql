@@ -70,3 +70,6 @@ CREATE INDEX idx_driver_profiles_is_online ON driver_profiles(is_online);
 CREATE INDEX idx_driver_profiles_rating ON driver_profiles(average_rating);
 
 
+
+
+

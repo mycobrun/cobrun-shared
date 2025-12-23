@@ -96,3 +96,6 @@ CREATE INDEX idx_device_fingerprints_device_id ON device_fingerprints(device_id)
 CREATE INDEX idx_device_fingerprints_trust_score ON device_fingerprints(trust_score);
 
 
+
+
+

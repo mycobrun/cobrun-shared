@@ -30,3 +30,6 @@ CREATE INDEX idx_vehicles_status ON vehicles(status);
 CREATE INDEX idx_vehicles_vehicle_type ON vehicles(vehicle_type);
 
 
+
+
+
