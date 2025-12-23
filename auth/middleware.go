@@ -163,3 +163,8 @@ func GetUserIDFromContext(ctx context.Context) string {
 	}
 	return userID
 }
+
+// WithClaims adds claims to the context. Useful for testing.
+func WithClaims(ctx context.Context, claims *Claims) context.Context {
+	return context.WithValue(ctx, ClaimsContextKey, claims)
+}

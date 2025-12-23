@@ -2,6 +2,8 @@
 package validation
 
 import (
+	"encoding/json"
+	"net/http"
 	"reflect"
 	"regexp"
 	"strings"
@@ -239,4 +241,55 @@ func (v *Validator) Struct(s interface{}) error {
 // Var validates a single variable.
 func (v *Validator) Var(field interface{}, tag string) error {
 	return v.v.Var(field, tag)
+}
+
+// DecodeAndValidate decodes JSON from request body and validates it.
+// Returns true if successful, false if there was an error (error response already written).
+func DecodeAndValidate(w http.ResponseWriter, r *http.Request, v interface{}) bool {
+	// Check content type
+	contentType := r.Header.Get("Content-Type")
+	if contentType != "" && !strings.HasPrefix(contentType, "application/json") {
+		writeValidationError(w, http.StatusUnsupportedMediaType, "Content-Type must be application/json", nil)
+		return false
+	}
+
+	// Decode JSON
+	if err := json.NewDecoder(r.Body).Decode(v); err != nil {
+		writeValidationError(w, http.StatusBadRequest, "Invalid JSON: "+err.Error(), nil)
+		return false
+	}
+
+	// Validate struct
+	if err := Validate(v); err != nil {
+		validationErrors := ParseValidationErrors(err)
+		writeValidationError(w, http.StatusBadRequest, "Validation failed", validationErrors)
+		return false
+	}
+
+	return true
+}
+
+// writeValidationError writes a validation error response.
+func writeValidationError(w http.ResponseWriter, statusCode int, message string, errors ValidationErrors) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+
+	response := map[string]interface{}{
+		"error":   "validation_error",
+		"message": message,
+	}
+	if len(errors) > 0 {
+		response["details"] = errors
+	}
+
+	json.NewEncoder(w).Encode(response)
+}
+
+// ValidateStruct validates a struct and returns a user-friendly error.
+// This is useful when you've already decoded the request body.
+func ValidateStruct(v interface{}) (ValidationErrors, error) {
+	if err := Validate(v); err != nil {
+		return ParseValidationErrors(err), err
+	}
+	return nil, nil
 }

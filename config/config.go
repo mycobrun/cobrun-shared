@@ -42,21 +42,41 @@ type Config struct {
 	JWTSecret   string
 	JWTIssuer   string
 	JWTAudience string
+
+	// Security
+	CORSAllowedOrigins []string
+
+	// Rate Limiting
+	RateLimitEnabled bool
+	RateLimitRPS     float64
+	RateLimitBurst   int
 }
 
 // Load loads configuration from environment variables.
 // For production, secrets are loaded from Azure Key Vault.
 func Load(serviceName string) (*Config, error) {
+	environment := getEnv("ENVIRONMENT", "development")
+
+	// Default CORS origins based on environment
+	defaultOrigins := "http://localhost:3000,http://localhost:8080"
+	if environment == "production" {
+		defaultOrigins = "https://app.cobrun.com,https://driver.cobrun.com,https://admin.cobrun.com"
+	}
+
 	cfg := &Config{
-		ServiceName:  serviceName,
-		Environment:  getEnv("ENVIRONMENT", "development"),
-		Version:      getEnv("VERSION", "0.0.1"),
-		Port:         getEnvInt("PORT", 8080),
-		ReadTimeout:  getEnvDuration("READ_TIMEOUT", 30*time.Second),
-		WriteTimeout: getEnvDuration("WRITE_TIMEOUT", 30*time.Second),
-		IdleTimeout:  getEnvDuration("IDLE_TIMEOUT", 60*time.Second),
-		LogLevel:     getEnv("LOG_LEVEL", "info"),
-		KeyVaultName: getEnv("KEY_VAULT_NAME", ""),
+		ServiceName:        serviceName,
+		Environment:        environment,
+		Version:            getEnv("VERSION", "0.0.1"),
+		Port:               getEnvInt("PORT", 8080),
+		ReadTimeout:        getEnvDuration("READ_TIMEOUT", 30*time.Second),
+		WriteTimeout:       getEnvDuration("WRITE_TIMEOUT", 30*time.Second),
+		IdleTimeout:        getEnvDuration("IDLE_TIMEOUT", 60*time.Second),
+		LogLevel:           getEnv("LOG_LEVEL", "info"),
+		KeyVaultName:       getEnv("KEY_VAULT_NAME", ""),
+		CORSAllowedOrigins: getEnvSlice("CORS_ORIGINS", defaultOrigins),
+		RateLimitEnabled:   getEnvBool("RATE_LIMIT_ENABLED", true),
+		RateLimitRPS:       getEnvFloat("RATE_LIMIT_RPS", 100),
+		RateLimitBurst:     getEnvInt("RATE_LIMIT_BURST", 200),
 	}
 
 	// Load secrets from Key Vault in production
@@ -235,4 +255,26 @@ func GetEnvDuration(key string, defaultValue time.Duration) time.Duration {
 // GetEnvFloat gets an environment variable as a float with a default value.
 func GetEnvFloat(key string, defaultValue float64) float64 {
 	return getEnvFloat(key, defaultValue)
+}
+
+// getEnvSlice parses a comma-separated environment variable into a slice.
+func getEnvSlice(key string, defaultValue string) []string {
+	value := getEnv(key, defaultValue)
+	if value == "" {
+		return nil
+	}
+	parts := strings.Split(value, ",")
+	result := make([]string, 0, len(parts))
+	for _, part := range parts {
+		trimmed := strings.TrimSpace(part)
+		if trimmed != "" {
+			result = append(result, trimmed)
+		}
+	}
+	return result
+}
+
+// GetEnvSlice gets an environment variable as a string slice.
+func GetEnvSlice(key string, defaultValue string) []string {
+	return getEnvSlice(key, defaultValue)
 }
