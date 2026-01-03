@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	pkghttp "github.com/cobrun/cobrun-platform/pkg/http"
+	pkghttp "github.com/mycobrun/cobrun-shared/http"
 )
 
 // PromotionsClient is an HTTP client for the promotions service.

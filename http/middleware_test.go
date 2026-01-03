@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cobrun/cobrun-platform/pkg/logging"
+	"github.com/mycobrun/cobrun-shared/logging"
 )
 
 func TestRequestID(t *testing.T) {

@@ -9,8 +9,8 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
 
-	"github.com/cobrun/cobrun-platform/pkg/errors"
-	"github.com/cobrun/cobrun-platform/pkg/logging"
+	"github.com/mycobrun/cobrun-shared/errors"
+	"github.com/mycobrun/cobrun-shared/logging"
 )
 
 // RequestIDKey is the context key for request ID.

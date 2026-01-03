@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/cobrun/cobrun-platform/pkg/config"
-	"github.com/cobrun/cobrun-platform/pkg/database"
+	"github.com/mycobrun/cobrun-shared/config"
+	"github.com/mycobrun/cobrun-shared/database"
 )
 
 // Service holds all initialized components for a microservice.

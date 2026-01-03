@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/cobrun/cobrun-platform/pkg/errors"
+	"github.com/mycobrun/cobrun-shared/errors"
 )
 
 // ContextKey is used for storing auth data in context.

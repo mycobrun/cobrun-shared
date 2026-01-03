@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	pkgtesting "github.com/cobrun/cobrun-platform/pkg/testing"
+	pkgtesting "github.com/mycobrun/cobrun-shared/testing"
 	"github.com/redis/go-redis/v9"
 )
 

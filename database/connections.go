@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/cobrun/cobrun-platform/pkg/config"
-	"github.com/cobrun/cobrun-platform/pkg/database/cosmosdb"
+	"github.com/mycobrun/cobrun-shared/config"
+	"github.com/mycobrun/cobrun-shared/database/cosmosdb"
 )
 
 // Connections holds all database connections.

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	pkghttp "github.com/cobrun/cobrun-platform/pkg/http"
+	pkghttp "github.com/mycobrun/cobrun-shared/http"
 )
 
 // NotificationClient is an HTTP client for the notifications service.

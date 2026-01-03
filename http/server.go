@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cobrun/cobrun-platform/pkg/logging"
+	"github.com/mycobrun/cobrun-shared/logging"
 )
 
 // Server wraps an HTTP server with graceful shutdown.

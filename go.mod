@@ -1,4 +1,4 @@
-module github.com/cobrun/cobrun-platform/pkg
+module github.com/mycobrun/cobrun-shared
 
 go 1.24.0
 
