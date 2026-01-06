@@ -31,6 +31,28 @@ func DefaultDatabaseConfig() *DatabaseConfig {
 		DatabaseName: "cobrun",
 		Containers: []ContainerConfig{
 			{
+				Name:             "users",
+				PartitionKeyPath: "/id",
+				IndexingPolicy:   defaultIndexingPolicy(),
+				UniqueKeys:       []string{"/email"},
+			},
+			{
+				Name:             "verifications",
+				PartitionKeyPath: "/user_id",
+				TTLSeconds:       3600, // 1 hour TTL for verifications
+				IndexingPolicy:   defaultIndexingPolicy(),
+			},
+			{
+				Name:             "riders",
+				PartitionKeyPath: "/user_id",
+				IndexingPolicy:   defaultIndexingPolicy(),
+			},
+			{
+				Name:             "drivers",
+				PartitionKeyPath: "/user_id",
+				IndexingPolicy:   defaultIndexingPolicy(),
+			},
+			{
 				Name:             "trips",
 				PartitionKeyPath: "/rider_id",
 				IndexingPolicy:   defaultIndexingPolicy(),
