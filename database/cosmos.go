@@ -82,6 +82,7 @@ type CosmosContainer struct {
 }
 
 // Create creates a new item in the container.
+// Returns ErrConflict if an item with the same ID already exists.
 func (c *CosmosContainer) Create(ctx context.Context, partitionKey string, item interface{}) error {
 	pk := azcosmos.NewPartitionKeyString(partitionKey)
 
@@ -92,6 +93,10 @@ func (c *CosmosContainer) Create(ctx context.Context, partitionKey string, item 
 
 	_, err = c.container.CreateItem(ctx, pk, data, nil)
 	if err != nil {
+		var respErr *azcore.ResponseError
+		if errors.As(err, &respErr) && respErr.StatusCode == 409 {
+			return ErrConflict
+		}
 		return fmt.Errorf("failed to create item: %w", err)
 	}
 
@@ -259,6 +264,7 @@ type CosmosDocument struct {
 // Common errors.
 var (
 	ErrNotFound = errors.New("item not found")
+	ErrConflict = errors.New("item already exists")
 )
 
 // Ping checks if the connection is healthy.
@@ -337,6 +343,15 @@ func (c *CosmosClient) GetItem(ctx context.Context, database, containerName, par
 		return err
 	}
 	return container.Read(ctx, partitionKey, id, result)
+}
+
+// CreateItem creates a new item. Returns ErrConflict if an item with the same ID already exists.
+func (c *CosmosClient) CreateItem(ctx context.Context, database, containerName, partitionKey string, item interface{}) error {
+	container, err := c.Container(containerName)
+	if err != nil {
+		return err
+	}
+	return container.Create(ctx, partitionKey, item)
 }
 
 // UpsertItem creates or updates an item.
