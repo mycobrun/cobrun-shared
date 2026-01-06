@@ -212,6 +212,9 @@ func (c *CosmosContainer) Query(ctx context.Context, partitionKey, query string,
 }
 
 // QueryCrossPartition executes a cross-partition query.
+// Note: The azcosmos SDK requires a partition key. This function attempts to extract
+// the partition key from common query parameters (@email, @user_id, @userId).
+// For true cross-partition queries where no partition key is known, use QueryWithFeedRange.
 func (c *CosmosContainer) QueryCrossPartition(ctx context.Context, query string, params []QueryParam, results interface{}) error {
 	queryOptions := &azcosmos.QueryOptions{}
 	for _, p := range params {
@@ -221,8 +224,26 @@ func (c *CosmosContainer) QueryCrossPartition(ctx context.Context, query string,
 		})
 	}
 
-	// Use empty PartitionKey for cross-partition queries
-	pager := c.container.NewQueryItemsPager(query, azcosmos.PartitionKey{}, queryOptions)
+	// Try to extract partition key value from common query parameters
+	var partitionKeyValue string
+	for _, p := range params {
+		if p.Name == "@email" || p.Name == "@user_id" || p.Name == "@userId" || p.Name == "@id" {
+			if v, ok := p.Value.(string); ok && v != "" {
+				partitionKeyValue = v
+				break
+			}
+		}
+	}
+
+	// If we found a partition key value, use partition-scoped query
+	if partitionKeyValue != "" {
+		return c.Query(ctx, partitionKeyValue, query, params, results)
+	}
+
+	// For queries without a recognizable partition key, try with an empty partition key
+	// This may fail for containers that require a partition key
+	pk := azcosmos.NewPartitionKeyString("")
+	pager := c.container.NewQueryItemsPager(query, pk, queryOptions)
 
 	var items []json.RawMessage
 	for pager.More() {
