@@ -86,6 +86,27 @@ func DefaultDatabaseConfig() *DatabaseConfig {
 				TTLSeconds:       2592000, // 30 days TTL
 				IndexingPolicy:   eventIndexingPolicy(),
 			},
+			// Driver onboarding containers
+			{
+				Name:             "driver_profiles",
+				PartitionKeyPath: "/user_id",
+				IndexingPolicy:   defaultIndexingPolicy(),
+			},
+			{
+				Name:             "driver_vehicles",
+				PartitionKeyPath: "/driver_id",
+				IndexingPolicy:   defaultIndexingPolicy(),
+			},
+			{
+				Name:             "driver_documents",
+				PartitionKeyPath: "/driver_id",
+				IndexingPolicy:   defaultIndexingPolicy(),
+			},
+			{
+				Name:             "driver_status_history",
+				PartitionKeyPath: "/driver_id",
+				IndexingPolicy:   defaultIndexingPolicy(),
+			},
 		},
 	}
 }
