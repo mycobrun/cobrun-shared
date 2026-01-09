@@ -2,10 +2,18 @@
 package database
 
 import (
+	"bytes"
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
@@ -212,9 +220,9 @@ func (c *CosmosContainer) Query(ctx context.Context, partitionKey, query string,
 }
 
 // QueryCrossPartition executes a cross-partition query.
-// Note: The azcosmos SDK requires a partition key. This function attempts to extract
-// the partition key from common query parameters (@email, @user_id, @userId).
-// For true cross-partition queries where no partition key is known, use QueryWithFeedRange.
+// Note: The azcosmos SDK v0.3.6 requires a partition key for queries.
+// This function attempts to extract the partition key from common query parameters.
+// If no partition key is found, it signals the caller to use QueryAllPartitions instead.
 func (c *CosmosContainer) QueryCrossPartition(ctx context.Context, query string, params []QueryParam, results interface{}) error {
 	queryOptions := &azcosmos.QueryOptions{}
 	for _, p := range params {
@@ -241,7 +249,9 @@ func (c *CosmosContainer) QueryCrossPartition(ctx context.Context, query string,
 	}
 
 	// For queries without a recognizable partition key, try with an empty partition key
-	// This may fail for containers that require a partition key
+	// This may return empty results for containers that don't have empty partition keys
+	// Note: This is a limitation of the azcosmos SDK v0.3.6 which doesn't support
+	// true cross-partition queries. For cross-partition queries, use CosmosClient.QueryAllPartitions
 	pk := azcosmos.NewPartitionKeyString("")
 	pager := c.container.NewQueryItemsPager(query, pk, queryOptions)
 
@@ -392,12 +402,158 @@ func (c *CosmosClient) UpsertItem(ctx context.Context, database, containerName, 
 //	params := []QueryParam{{Name: "@userId", Value: userID}}
 //	err := client.QueryItems(ctx, "db", "container", query, params, &results)
 func (c *CosmosClient) QueryItems(ctx context.Context, database, containerName, query string, params []QueryParam, results interface{}) error {
+	// Check if any recognizable partition key parameter is present
+	hasPartitionKey := false
+	for _, p := range params {
+		if p.Name == "@email" || p.Name == "@user_id" || p.Name == "@userId" || p.Name == "@id" {
+			if v, ok := p.Value.(string); ok && v != "" {
+				hasPartitionKey = true
+				break
+			}
+		}
+	}
+
+	// If no partition key parameter, use REST API for true cross-partition query
+	if !hasPartitionKey && c.config.Key != "" {
+		return c.QueryAllPartitions(ctx, containerName, query, params, results)
+	}
+
 	container, err := c.Container(containerName)
 	if err != nil {
 		return err
 	}
 	// Use cross-partition query for flexibility
 	return container.QueryCrossPartition(ctx, query, params, results)
+}
+
+// QueryAllPartitions executes a true cross-partition query using the REST API.
+// This bypasses the SDK's limitation of requiring a partition key for queries.
+// Note: This only works when using key-based authentication (not managed identity).
+func (c *CosmosClient) QueryAllPartitions(ctx context.Context, containerName, query string, params []QueryParam, results interface{}) error {
+	if c.config.Key == "" {
+		return fmt.Errorf("QueryAllPartitions requires key-based authentication")
+	}
+
+	// Build the query body
+	queryBody := map[string]interface{}{
+		"query": query,
+	}
+
+	if len(params) > 0 {
+		parameters := make([]map[string]interface{}, 0, len(params))
+		for _, p := range params {
+			parameters = append(parameters, map[string]interface{}{
+				"name":  p.Name,
+				"value": p.Value,
+			})
+		}
+		queryBody["parameters"] = parameters
+	}
+
+	bodyBytes, err := json.Marshal(queryBody)
+	if err != nil {
+		return fmt.Errorf("failed to marshal query body: %w", err)
+	}
+
+	// Build the URL
+	resourceLink := fmt.Sprintf("dbs/%s/colls/%s", c.config.DatabaseName, containerName)
+	queryURL := fmt.Sprintf("%s/%s/docs", c.config.Endpoint, resourceLink)
+
+	var allDocuments []json.RawMessage
+	var continuationToken string
+
+	// Paginate through all results
+	for {
+		req, err := http.NewRequestWithContext(ctx, "POST", queryURL, bytes.NewReader(bodyBytes))
+		if err != nil {
+			return fmt.Errorf("failed to create request: %w", err)
+		}
+
+		// Generate auth header
+		dateStr := time.Now().UTC().Format(http.TimeFormat)
+		authHeader := c.generateAuthHeader("POST", "docs", resourceLink, dateStr)
+
+		// Set required headers
+		req.Header.Set("Authorization", authHeader)
+		req.Header.Set("x-ms-date", dateStr)
+		req.Header.Set("x-ms-version", "2018-12-31")
+		req.Header.Set("Content-Type", "application/query+json")
+		req.Header.Set("x-ms-documentdb-isquery", "true")
+		req.Header.Set("x-ms-documentdb-query-enablecrosspartition", "true")
+
+		if continuationToken != "" {
+			req.Header.Set("x-ms-continuation", continuationToken)
+		}
+
+		// Execute request
+		client := &http.Client{Timeout: 30 * time.Second}
+		resp, err := client.Do(req)
+		if err != nil {
+			return fmt.Errorf("failed to execute query: %w", err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			bodyBytes, _ := io.ReadAll(resp.Body)
+			return fmt.Errorf("query failed with status %d: %s", resp.StatusCode, string(bodyBytes))
+		}
+
+		// Parse response
+		var queryResp struct {
+			Documents []json.RawMessage `json:"Documents"`
+			Count     int               `json:"_count"`
+		}
+
+		if err := json.NewDecoder(resp.Body).Decode(&queryResp); err != nil {
+			return fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		allDocuments = append(allDocuments, queryResp.Documents...)
+
+		// Check for continuation
+		continuationToken = resp.Header.Get("x-ms-continuation")
+		if continuationToken == "" {
+			break
+		}
+	}
+
+	// Marshal all documents into the results
+	data, err := json.Marshal(allDocuments)
+	if err != nil {
+		return fmt.Errorf("failed to marshal results: %w", err)
+	}
+
+	if err := json.Unmarshal(data, results); err != nil {
+		return fmt.Errorf("failed to unmarshal results: %w", err)
+	}
+
+	return nil
+}
+
+// generateAuthHeader generates the Cosmos DB authorization header.
+func (c *CosmosClient) generateAuthHeader(verb, resourceType, resourceLink, dateStr string) string {
+	// Decode the master key
+	key, err := base64.StdEncoding.DecodeString(c.config.Key)
+	if err != nil {
+		return ""
+	}
+
+	// Build the string to sign
+	stringToSign := fmt.Sprintf("%s\n%s\n%s\n%s\n%s\n",
+		strings.ToLower(verb),
+		strings.ToLower(resourceType),
+		resourceLink,
+		strings.ToLower(dateStr),
+		"",
+	)
+
+	// Generate HMAC signature
+	h := hmac.New(sha256.New, key)
+	h.Write([]byte(stringToSign))
+	signature := base64.StdEncoding.EncodeToString(h.Sum(nil))
+
+	// Build auth header
+	return url.QueryEscape(fmt.Sprintf("type=master&ver=1.0&sig=%s", signature))
 }
 
 // QueryItemsWithPartition executes a parameterized query within a specific partition.
