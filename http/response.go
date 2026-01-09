@@ -7,13 +7,44 @@ import (
 )
 
 // Response is a standard API response wrapper.
+// Per Section 9 of technical design:
+// {
+//   "data": <payload>,
+//   "meta": {"correlationId": "...", "nextCursor": "..."},
+//   "error": null
+// }
 type Response struct {
 	Success bool        `json:"success"`
 	Data    interface{} `json:"data,omitempty"`
 	Meta    *Meta       `json:"meta,omitempty"`
+	Error   interface{} `json:"error,omitempty"` // null for success responses
 }
 
-// Meta contains response metadata.
+// APIResponse is the standard API response envelope per Section 9.
+type APIResponse struct {
+	Data  interface{} `json:"data"`
+	Meta  *APIMeta    `json:"meta,omitempty"`
+	Error *APIError   `json:"error,omitempty"`
+}
+
+// APIMeta contains response metadata per Section 9.
+type APIMeta struct {
+	CorrelationID string `json:"correlationId,omitempty"`
+	NextCursor    string `json:"nextCursor,omitempty"`
+	Page          int    `json:"page,omitempty"`
+	PerPage       int    `json:"per_page,omitempty"`
+	Total         int64  `json:"total,omitempty"`
+	TotalPages    int    `json:"total_pages,omitempty"`
+}
+
+// APIError contains error details per Section 9.
+type APIError struct {
+	Code    string                 `json:"code"`
+	Message string                 `json:"message"`
+	Details map[string]interface{} `json:"details,omitempty"`
+}
+
+// Meta contains response metadata (legacy, for backward compatibility).
 type Meta struct {
 	Page       int   `json:"page,omitempty"`
 	PerPage    int   `json:"per_page,omitempty"`
@@ -147,3 +178,71 @@ func ParseInt(s string, v *int) (bool, error) {
 	*v = val
 	return true, nil
 }
+
+// === Standard API Response Methods (Section 9) ===
+
+// APISuccess sends a standard API success response.
+func APISuccess(w http.ResponseWriter, status int, data interface{}, correlationID string) {
+	var meta *APIMeta
+	if correlationID != "" {
+		meta = &APIMeta{CorrelationID: correlationID}
+	}
+	JSON(w, status, APIResponse{
+		Data:  data,
+		Meta:  meta,
+		Error: nil,
+	})
+}
+
+// APIPaginated sends a paginated API response with cursor.
+func APIPaginated(w http.ResponseWriter, data interface{}, correlationID, nextCursor string, page, perPage int, total int64) {
+	totalPages := int(total) / perPage
+	if int(total)%perPage > 0 {
+		totalPages++
+	}
+
+	JSON(w, http.StatusOK, APIResponse{
+		Data: data,
+		Meta: &APIMeta{
+			CorrelationID: correlationID,
+			NextCursor:    nextCursor,
+			Page:          page,
+			PerPage:       perPage,
+			Total:         total,
+			TotalPages:    totalPages,
+		},
+		Error: nil,
+	})
+}
+
+// APIError sends a standard API error response.
+func APIErrorResponse(w http.ResponseWriter, status int, code, message, correlationID string, details map[string]interface{}) {
+	var meta *APIMeta
+	if correlationID != "" {
+		meta = &APIMeta{CorrelationID: correlationID}
+	}
+	JSON(w, status, APIResponse{
+		Data: nil,
+		Meta: meta,
+		Error: &APIError{
+			Code:    code,
+			Message: message,
+			Details: details,
+		},
+	})
+}
+
+// Common error codes per Section 9
+const (
+	ErrCodeBadRequest        = "BAD_REQUEST"
+	ErrCodeUnauthorized      = "UNAUTHORIZED"
+	ErrCodeForbidden         = "FORBIDDEN"
+	ErrCodeNotFound          = "NOT_FOUND"
+	ErrCodeConflict          = "CONFLICT"
+	ErrCodeTooManyRequests   = "TOO_MANY_REQUESTS"
+	ErrCodeInternalError     = "INTERNAL_ERROR"
+	ErrCodeDriverSuspended   = "DRIVER_SUSPENDED"
+	ErrCodeDriverNotApproved = "DRIVER_NOT_APPROVED"
+	ErrCodeDocumentExpired   = "DOCUMENT_EXPIRED"
+	ErrCodeBGCheckFailed     = "BACKGROUND_CHECK_FAILED"
+)
