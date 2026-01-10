@@ -3,6 +3,7 @@ package resilience
 import (
 	"context"
 	"errors"
+	"sync"
 	"testing"
 	"time"
 )
