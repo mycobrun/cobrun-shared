@@ -148,11 +148,11 @@ func (ve ValidationErrors) Error() string {
 	var sb strings.Builder
 	for i, e := range ve {
 		if i > 0 {
-			sb.WriteString("; ")
+			_, _ = sb.WriteString("; ")
 		}
-		sb.WriteString(e.Field)
-		sb.WriteString(": ")
-		sb.WriteString(e.Message)
+		_, _ = sb.WriteString(e.Field)
+		_, _ = sb.WriteString(": ")
+		_, _ = sb.WriteString(e.Message)
 	}
 	return sb.String()
 }
