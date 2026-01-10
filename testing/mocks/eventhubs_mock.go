@@ -52,7 +52,9 @@ func (m *MockEventHubsClient) Publish(ctx context.Context, topic string, payload
 	if handlers, ok := m.handlers[topic]; ok {
 		data, _ := json.Marshal(payload)
 		for _, handler := range handlers {
-			go handler(ctx, data)
+			go func(h func(context.Context, []byte) error) {
+				_ = h(ctx, data)
+			}(handler)
 		}
 	}
 
