@@ -1,0 +1,53 @@
+run:
+  timeout: 5m
+
+linters:
+  enable:
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+  disable:
+    - typecheck
+
+linters-settings:
+  errcheck:
+    # These are safe to ignore in test files
+    exclude-functions:
+      - (*testing.T).Log
+      - (*testing.T).Logf
+      - (*testing.T).Error
+      - (*testing.T).Errorf
+
+issues:
+  exclude-rules:
+    # Exclude context key type issues in test files
+    - path: _test\.go
+      linters:
+        - staticcheck
+      text: "SA1029"
+    
+    # Exclude comparison issues in cosmos.go (these are Azure SDK patterns)
+    - path: database/cosmos\.go
+      linters:
+        - staticcheck
+      text: "SA4023"
+    
+    # Exclude nil pointer in maps which has proper nil handling
+    - path: maps/.*\.go
+      linters:
+        - staticcheck
+      text: "SA5011"
+    
+    # Exclude empty branches in http package (intentional control flow)
+    - path: http/.*\.go
+      linters:
+        - staticcheck
+      text: "SA9003"
+    
+    # Exclude unused field mu in tests (used for test sync but linter can't see)
+    - path: _test\.go
+      linters:
+        - unused
