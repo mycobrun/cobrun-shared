@@ -96,7 +96,7 @@ func (c *SignalRClient) generateToken(audience string, expiresAt time.Time) (str
 	// Create signature
 	signingInput := header + "." + payloadEncoded
 	mac := hmac.New(sha256.New, []byte(c.accessKey))
-	mac.Write([]byte(signingInput))
+	_, _ = mac.Write([]byte(signingInput))
 	signature := base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
 
 	return signingInput + "." + signature, nil
@@ -308,7 +308,7 @@ func (c *SignalRClient) GenerateClientToken(userID string, ttl time.Duration) (*
 	// Create signature
 	signingInput := header + "." + payloadEncoded
 	mac := hmac.New(sha256.New, []byte(c.accessKey))
-	mac.Write([]byte(signingInput))
+	_, _ = mac.Write([]byte(signingInput))
 	signature := base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
 
 	token := signingInput + "." + signature

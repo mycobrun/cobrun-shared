@@ -549,7 +549,7 @@ func (c *CosmosClient) generateAuthHeader(verb, resourceType, resourceLink, date
 
 	// Generate HMAC signature
 	h := hmac.New(sha256.New, key)
-	h.Write([]byte(stringToSign))
+	_, _ = h.Write([]byte(stringToSign))
 	signature := base64.StdEncoding.EncodeToString(h.Sum(nil))
 
 	// Build auth header

@@ -140,7 +140,7 @@ func (c *Client) generateAccessToken(audience, userID string, groups []string, e
 	}
 
 	mac := hmac.New(sha256.New, keyBytes)
-	mac.Write([]byte(signingInput))
+	_, _ = mac.Write([]byte(signingInput))
 	signature := base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
 
 	return signingInput + "." + signature, nil
