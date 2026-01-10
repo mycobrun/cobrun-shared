@@ -66,7 +66,7 @@ func TestCircuitBreaker_BlocksWhenOpen(t *testing.T) {
 
 	// Open the circuit
 	for i := 0; i < 2; i++ {
-		_ = _ = cb.Execute(func() error { return errTest })
+		_ = cb.Execute(func() error { return errTest })
 	}
 
 	// Should block
@@ -89,7 +89,7 @@ func TestCircuitBreaker_TransitionsToHalfOpen(t *testing.T) {
 
 	// Open the circuit
 	for i := 0; i < 2; i++ {
-		_ = _ = cb.Execute(func() error { return errTest })
+		_ = cb.Execute(func() error { return errTest })
 	}
 
 	// Wait for timeout
@@ -120,7 +120,7 @@ func TestCircuitBreaker_ClosesAfterSuccessInHalfOpen(t *testing.T) {
 
 	// Open the circuit
 	for i := 0; i < 2; i++ {
-		_ = _ = cb.Execute(func() error { return errTest })
+		_ = cb.Execute(func() error { return errTest })
 	}
 
 	// Wait for timeout to enter half-open
@@ -145,7 +145,7 @@ func TestCircuitBreaker_ReopensOnFailureInHalfOpen(t *testing.T) {
 
 	// Open the circuit
 	for i := 0; i < 2; i++ {
-		_ = _ = cb.Execute(func() error { return errTest })
+		_ = cb.Execute(func() error { return errTest })
 	}
 
 	// Wait for timeout
@@ -209,7 +209,7 @@ func TestCircuitBreaker_Reset(t *testing.T) {
 
 	// Open the circuit
 	for i := 0; i < 2; i++ {
-		_ = _ = cb.Execute(func() error { return errTest })
+		_ = cb.Execute(func() error { return errTest })
 	}
 
 	if cb.State() != StateOpen {
