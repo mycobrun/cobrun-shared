@@ -54,7 +54,7 @@ func TestResilientHTTPClient_Get(t *testing.T) {
 			t.Errorf("expected GET request, got %s", r.Method)
 		}
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("success"))
+		_, _ = w.Write([]byte("success"))
 	}))
 	defer server.Close()
 
@@ -257,7 +257,7 @@ func TestResilientHTTPClient_ContextTimeout(t *testing.T) {
 func TestResilientHTTPClient_SuccessfulRequest(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("success"))
+		_, _ = w.Write([]byte("success"))
 	}))
 	defer server.Close()
 

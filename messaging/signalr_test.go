@@ -299,7 +299,7 @@ func TestSignalRClientSendRequest(t *testing.T) {
 	t.Run("send request with error response", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("Bad request"))
+			_, _ = w.Write([]byte("Bad request"))
 		}))
 		defer server.Close()
 
