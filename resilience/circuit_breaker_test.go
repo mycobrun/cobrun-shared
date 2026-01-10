@@ -224,7 +224,7 @@ func TestCircuitBreaker_Reset(t *testing.T) {
 	}
 
 	// Should allow requests again
-	err := _ = cb.Execute(func() error { return nil })
+	err := cb.Execute(func() error { return nil })
 	if err != nil {
 		t.Errorf("expected no error after reset, got %v", err)
 	}
@@ -443,13 +443,13 @@ func TestCircuitBreaker_MaxRequestsInHalfOpen(t *testing.T) {
 	time.Sleep(60 * time.Millisecond)
 
 	// First request transitions to half-open and is allowed
-	err := _ = cb.Execute(func() error { return nil })
+	err := cb.Execute(func() error { return nil })
 	if err != nil {
 		t.Errorf("first request should be allowed: %v", err)
 	}
 
 	// Second request should be allowed (halfOpenRequests goes to 2)
-	err = _ = cb.Execute(func() error { return nil })
+	err = cb.Execute(func() error { return nil })
 	if err != nil {
 		t.Errorf("second request should be allowed: %v", err)
 	}
@@ -477,7 +477,7 @@ func TestCircuitBreaker_StateOpenDuration(t *testing.T) {
 	_ = cb.Execute(func() error { return errTest })
 
 	// Should be blocked immediately
-	err := _ = cb.Execute(func() error { return nil })
+	err := cb.Execute(func() error { return nil })
 	if !errors.Is(err, ErrCircuitOpen) {
 		t.Error("expected circuit to be open")
 	}
@@ -486,7 +486,7 @@ func TestCircuitBreaker_StateOpenDuration(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 
 	// Should still be blocked
-	err = _ = cb.Execute(func() error { return nil })
+	err = cb.Execute(func() error { return nil })
 	if !errors.Is(err, ErrCircuitOpen) {
 		t.Error("expected circuit to still be open")
 	}
@@ -495,7 +495,7 @@ func TestCircuitBreaker_StateOpenDuration(t *testing.T) {
 	time.Sleep(60 * time.Millisecond)
 
 	// Should allow request (transition to half-open)
-	err = _ = cb.Execute(func() error { return nil })
+	err = cb.Execute(func() error { return nil })
 	if err != nil {
 		t.Errorf("expected request to be allowed after timeout, got %v", err)
 	}
