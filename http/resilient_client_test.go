@@ -329,7 +329,7 @@ func TestResilientClient_CircuitBreaker(t *testing.T) {
 
 	// First two requests should fail and open the circuit
 	for i := 0; i < 2; i++ {
-		client.Get(ctx, "/test", nil)
+		_, _ = client.Get(ctx, "/test", nil)
 	}
 
 	// Circuit should now be open

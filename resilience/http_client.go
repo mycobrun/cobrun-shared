@@ -90,7 +90,7 @@ func (c *ResilientHTTPClient) Do(req *http.Request) (*http.Response, error) {
 			// Consider 5xx errors as failures for circuit breaker
 			if resp.StatusCode >= 500 {
 				// Drain and close body to allow connection reuse
-				io.Copy(io.Discard, resp.Body)
+				_, _ = io.Copy(io.Discard, resp.Body)
 				resp.Body.Close()
 				return fmt.Errorf("server error: status %d", resp.StatusCode)
 			}

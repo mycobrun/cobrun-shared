@@ -40,25 +40,25 @@ func GetValidator() *validator.Validate {
 
 func registerCustomValidations(v *validator.Validate) {
 	// Phone number validation (E.164 format)
-	v.RegisterValidation("phone", validatePhone)
+	_ = v.RegisterValidation("phone", validatePhone)
 
 	// Latitude validation
-	v.RegisterValidation("latitude", validateLatitude)
+	_ = v.RegisterValidation("latitude", validateLatitude)
 
 	// Longitude validation
-	v.RegisterValidation("longitude", validateLongitude)
+	_ = v.RegisterValidation("longitude", validateLongitude)
 
 	// User type validation
-	v.RegisterValidation("user_type", validateUserType)
+	_ = v.RegisterValidation("user_type", validateUserType)
 
 	// Trip status validation
-	v.RegisterValidation("trip_status", validateTripStatus)
+	_ = v.RegisterValidation("trip_status", validateTripStatus)
 
 	// Currency code validation (ISO 4217)
-	v.RegisterValidation("currency", validateCurrency)
+	_ = v.RegisterValidation("currency", validateCurrency)
 
 	// UUID validation
-	v.RegisterValidation("uuid4", validateUUID4)
+	_ = v.RegisterValidation("uuid4", validateUUID4)
 }
 
 // Phone validates E.164 phone numbers.
@@ -282,7 +282,7 @@ func writeValidationError(w http.ResponseWriter, statusCode int, message string,
 		response["details"] = errors
 	}
 
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 // ValidateStruct validates a struct and returns a user-friendly error.

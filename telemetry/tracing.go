@@ -169,11 +169,11 @@ func SetSpanAttributes(ctx context.Context, attrs ...attribute.KeyValue) {
 // HTTPServerAttributes returns common HTTP server span attributes.
 func HTTPServerAttributes(r *http.Request, statusCode int) []attribute.KeyValue {
 	return []attribute.KeyValue{
-		semconv.HTTPMethod(r.Method),
-		semconv.HTTPURL(r.URL.String()),
+		attribute.String("http.request.method", r.Method),
+		attribute.String("url.full", r.URL.String()),
 		semconv.HTTPRoute(r.URL.Path),
-		semconv.HTTPStatusCode(statusCode),
-		semconv.HTTPScheme(r.URL.Scheme),
+		attribute.Int("http.response.status_code", statusCode),
+		attribute.String("url.scheme", r.URL.Scheme),
 		attribute.String("client.address", r.RemoteAddr),
 		semconv.UserAgentOriginal(r.UserAgent()),
 	}
@@ -182,9 +182,9 @@ func HTTPServerAttributes(r *http.Request, statusCode int) []attribute.KeyValue 
 // HTTPClientAttributes returns common HTTP client span attributes.
 func HTTPClientAttributes(method, url string, statusCode int) []attribute.KeyValue {
 	return []attribute.KeyValue{
-		semconv.HTTPMethod(method),
-		semconv.HTTPURL(url),
-		semconv.HTTPStatusCode(statusCode),
+		attribute.String("http.request.method", method),
+		attribute.String("url.full", url),
+		attribute.Int("http.response.status_code", statusCode),
 	}
 }
 
@@ -254,8 +254,8 @@ func TracingMiddleware(tracer trace.Tracer) func(http.Handler) http.Handler {
 			ctx, span := tracer.Start(ctx, spanName,
 				trace.WithSpanKind(trace.SpanKindServer),
 				trace.WithAttributes(
-					semconv.HTTPMethod(r.Method),
-					semconv.HTTPURL(r.URL.String()),
+					attribute.String("http.request.method", r.Method),
+					attribute.String("url.full", r.URL.String()),
 					semconv.HTTPRoute(r.URL.Path),
 					attribute.String("client.address", r.RemoteAddr),
 					semconv.UserAgentOriginal(r.UserAgent()),
@@ -270,7 +270,7 @@ func TracingMiddleware(tracer trace.Tracer) func(http.Handler) http.Handler {
 			next.ServeHTTP(wrapped, r.WithContext(ctx))
 
 			// Record status
-			span.SetAttributes(semconv.HTTPStatusCode(wrapped.status))
+			span.SetAttributes(attribute.Int("http.response.status_code", wrapped.status))
 
 			// Set span status based on HTTP status
 			if wrapped.status >= 400 {
@@ -317,8 +317,8 @@ func (c *HTTPClientTracer) Do(ctx context.Context, req *http.Request) (*http.Res
 	ctx, span := c.tracer.Start(ctx, spanName,
 		trace.WithSpanKind(trace.SpanKindClient),
 		trace.WithAttributes(
-			semconv.HTTPMethod(req.Method),
-			semconv.HTTPURL(req.URL.String()),
+			attribute.String("http.request.method", req.Method),
+			attribute.String("url.full", req.URL.String()),
 		),
 	)
 	defer span.End()
@@ -334,7 +334,7 @@ func (c *HTTPClientTracer) Do(ctx context.Context, req *http.Request) (*http.Res
 		return nil, err
 	}
 
-	span.SetAttributes(semconv.HTTPStatusCode(resp.StatusCode))
+	span.SetAttributes(attribute.Int("http.response.status_code", resp.StatusCode))
 
 	if resp.StatusCode >= 400 {
 		span.SetStatus(codes.Error, http.StatusText(resp.StatusCode))

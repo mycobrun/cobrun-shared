@@ -520,7 +520,7 @@ func TestMakeRequest(t *testing.T) {
 			assert.Equal(t, "DELETE", r.Method)
 
 			buf := new(bytes.Buffer)
-			buf.ReadFrom(r.Body)
+			_, _ = buf.ReadFrom(r.Body)
 			assert.Empty(t, buf.String())
 
 			w.WriteHeader(http.StatusOK)

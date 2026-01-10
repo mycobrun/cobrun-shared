@@ -398,10 +398,10 @@ func (c *Consumer) StartConsumer(ctx context.Context, handler MessageHandler, ma
 
 				if err := handler(ctx, m); err != nil {
 					// Handler failed, abandon the message
-					c.Abandon(ctx, m)
+					_ = c.Abandon(ctx, m)
 				} else {
 					// Handler succeeded, complete the message
-					c.Complete(ctx, m)
+					_ = c.Complete(ctx, m)
 				}
 			}(msg)
 		}

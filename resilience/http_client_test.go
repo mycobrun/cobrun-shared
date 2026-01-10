@@ -187,7 +187,7 @@ func TestResilientHTTPClient_CircuitBreaker(t *testing.T) {
 	// First two requests should fail and open the circuit
 	for i := 0; i < 2; i++ {
 		req, _ := http.NewRequestWithContext(ctx, http.MethodGet, server.URL+"/test", nil)
-		client.Do(req)
+		_, _ = client.Do(req)
 	}
 
 	// Circuit should now be open
@@ -358,7 +358,7 @@ func TestResilientHTTPClient_ExponentialBackoff(t *testing.T) {
 	client := NewResilientHTTPClient(config)
 
 	req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, server.URL+"/test", nil)
-	client.Do(req)
+	_, _ = client.Do(req)
 
 	// Verify exponential backoff
 	if len(timings) != 4 { // Initial + 3 retries
@@ -404,7 +404,7 @@ func TestResilientHTTPClient_NoRetryOnCircuitOpen(t *testing.T) {
 
 	// First request opens the circuit
 	req1, _ := http.NewRequestWithContext(ctx, http.MethodGet, server.URL+"/test", nil)
-	client.Do(req1)
+	_, _ = client.Do(req1)
 
 	attempts = 0 // Reset counter
 
@@ -464,7 +464,7 @@ func TestResilientHTTPClient_ServerErrorRetries(t *testing.T) {
 			client := NewResilientHTTPClient(config)
 
 			req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, server.URL+"/test", nil)
-			client.Do(req)
+			_, _ = client.Do(req)
 
 			if tt.expectRetry {
 				// Should attempt initial + 2 retries = 3 total

@@ -88,6 +88,6 @@ func TestMustInitFromEnv_NotConfigured(t *testing.T) {
 	ctx := context.Background()
 	tel := MustInitFromEnv(ctx)
 	if tel != nil {
-		tel.Shutdown(ctx)
+		_ = tel.Shutdown(ctx)
 	}
 }

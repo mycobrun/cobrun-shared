@@ -70,7 +70,7 @@ func WriteError(w http.ResponseWriter, err error, traceID string) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 // WriteErrorWithStatus writes an error response with a specific status code.
@@ -84,5 +84,5 @@ func WriteErrorWithStatus(w http.ResponseWriter, status int, code, message strin
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }

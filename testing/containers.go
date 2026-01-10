@@ -30,7 +30,7 @@ func StartRedisContainer(ctx context.Context) (*RedisContainer, error) {
 
 	connStr, err := container.ConnectionString(ctx)
 	if err != nil {
-		container.Terminate(ctx)
+		_ = container.Terminate(ctx)
 		return nil, fmt.Errorf("failed to get Redis connection string: %w", err)
 	}
 
@@ -60,7 +60,7 @@ func StartMongoDBContainer(ctx context.Context) (*MongoDBContainer, error) {
 
 	connStr, err := container.ConnectionString(ctx)
 	if err != nil {
-		container.Terminate(ctx)
+		_ = container.Terminate(ctx)
 		return nil, fmt.Errorf("failed to get MongoDB connection string: %w", err)
 	}
 
@@ -100,13 +100,13 @@ func StartSQLServerContainer(ctx context.Context) (*SQLServerContainer, error) {
 
 	host, err := container.Host(ctx)
 	if err != nil {
-		container.Terminate(ctx)
+		_ = container.Terminate(ctx)
 		return nil, fmt.Errorf("failed to get SQL Server host: %w", err)
 	}
 
 	port, err := container.MappedPort(ctx, "1433")
 	if err != nil {
-		container.Terminate(ctx)
+		_ = container.Terminate(ctx)
 		return nil, fmt.Errorf("failed to get SQL Server port: %w", err)
 	}
 
@@ -145,7 +145,7 @@ func StartAzuriteContainer(ctx context.Context) (*AzuriteContainer, error) {
 
 	host, err := container.Host(ctx)
 	if err != nil {
-		container.Terminate(ctx)
+		_ = container.Terminate(ctx)
 		return nil, fmt.Errorf("failed to get Azurite host: %w", err)
 	}
 

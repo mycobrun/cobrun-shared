@@ -291,7 +291,7 @@ func TestLogLevels(t *testing.T) {
 
 			w.Close()
 			os.Stdout = oldStdout
-			io.Copy(&buf, r)
+			_, _ = io.Copy(&buf, r)
 
 			output := buf.String()
 			hasOutput := len(strings.TrimSpace(output)) > 0
@@ -318,7 +318,7 @@ func TestStructuredLogging(t *testing.T) {
 
 	w.Close()
 	os.Stdout = oldStdout
-	io.Copy(&buf, r)
+	_, _ = io.Copy(&buf, r)
 
 	output := buf.String()
 
@@ -358,7 +358,7 @@ func TestJSONOutput(t *testing.T) {
 
 	w.Close()
 	os.Stdout = oldStdout
-	io.Copy(&buf, r)
+	_, _ = io.Copy(&buf, r)
 
 	output := buf.String()
 
@@ -472,7 +472,7 @@ func TestDebugSourceInformation(t *testing.T) {
 
 	w.Close()
 	os.Stdout = oldStdout
-	io.Copy(&buf, r)
+	_, _ = io.Copy(&buf, r)
 
 	output := buf.String()
 
@@ -500,7 +500,7 @@ func TestInfoNoSourceInformation(t *testing.T) {
 
 	w.Close()
 	os.Stdout = oldStdout
-	io.Copy(&buf, r)
+	_, _ = io.Copy(&buf, r)
 
 	output := buf.String()
 

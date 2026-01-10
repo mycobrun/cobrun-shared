@@ -160,7 +160,7 @@ func (c *SQLClient) WithTransaction(ctx context.Context, fn func(*Transaction) e
 
 	defer func() {
 		if p := recover(); p != nil {
-			tx.Rollback()
+			_ = tx.Rollback() // best-effort rollback on panic
 			panic(p)
 		}
 	}()

@@ -22,12 +22,20 @@ func TestDefaultDatabaseConfig(t *testing.T) {
 	}
 
 	expectedContainers := []string{
+		"users",
+		"verifications",
+		"riders",
+		"drivers",
 		"trips",
 		"ride_requests",
 		"driver_offers",
 		"driver_locations",
 		"location_history",
 		"events",
+		"driver_profiles",
+		"driver_vehicles",
+		"driver_documents",
+		"driver_status_history",
 	}
 
 	if len(config.Containers) != len(expectedContainers) {

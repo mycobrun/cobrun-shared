@@ -43,7 +43,7 @@ func TestCircuitBreaker_OpensAfterThreshold(t *testing.T) {
 
 	// Cause failures
 	for i := 0; i < 3; i++ {
-		cb.Execute(func() error {
+		_ = cb.Execute(func() error {
 			return errTest
 		})
 	}
@@ -65,7 +65,7 @@ func TestCircuitBreaker_BlocksWhenOpen(t *testing.T) {
 
 	// Open the circuit
 	for i := 0; i < 2; i++ {
-		cb.Execute(func() error { return errTest })
+		_ = cb.Execute(func() error { return errTest })
 	}
 
 	// Should block
@@ -88,7 +88,7 @@ func TestCircuitBreaker_TransitionsToHalfOpen(t *testing.T) {
 
 	// Open the circuit
 	for i := 0; i < 2; i++ {
-		cb.Execute(func() error { return errTest })
+		_ = cb.Execute(func() error { return errTest })
 	}
 
 	// Wait for timeout
@@ -119,7 +119,7 @@ func TestCircuitBreaker_ClosesAfterSuccessInHalfOpen(t *testing.T) {
 
 	// Open the circuit
 	for i := 0; i < 2; i++ {
-		cb.Execute(func() error { return errTest })
+		_ = cb.Execute(func() error { return errTest })
 	}
 
 	// Wait for timeout to enter half-open
@@ -144,7 +144,7 @@ func TestCircuitBreaker_ReopensOnFailureInHalfOpen(t *testing.T) {
 
 	// Open the circuit
 	for i := 0; i < 2; i++ {
-		cb.Execute(func() error { return errTest })
+		_ = cb.Execute(func() error { return errTest })
 	}
 
 	// Wait for timeout
@@ -208,7 +208,7 @@ func TestCircuitBreaker_Reset(t *testing.T) {
 
 	// Open the circuit
 	for i := 0; i < 2; i++ {
-		cb.Execute(func() error { return errTest })
+		_ = cb.Execute(func() error { return errTest })
 	}
 
 	if cb.State() != StateOpen {
@@ -343,8 +343,8 @@ func TestCircuitBreaker_ConcurrentExecution(t *testing.T) {
 
 	// Execute many concurrent requests
 	done := make(chan bool)
-	successCount := 0
-	failureCount := 0
+	var successCount, failureCount int32 // Use atomic operations for thread safety
+	var countMu sync.Mutex
 
 	for i := 0; i < 100; i++ {
 		go func(id int) {
@@ -355,11 +355,13 @@ func TestCircuitBreaker_ConcurrentExecution(t *testing.T) {
 				}
 				return nil
 			})
+			countMu.Lock()
 			if err == nil {
 				successCount++
 			} else {
 				failureCount++
 			}
+			countMu.Unlock()
 			done <- true
 		}(i)
 	}
@@ -371,11 +373,12 @@ func TestCircuitBreaker_ConcurrentExecution(t *testing.T) {
 
 	// Circuit breaker should handle concurrent access safely
 	if cb.State() == StateOpen {
-		t.Log("Circuit opened due to failures")
+		t.Logf("Circuit opened due to failures (success=%d, failure=%d)", successCount, failureCount)
 	}
 }
 
 func TestCircuitBreaker_MultipleStateTransitions(t *testing.T) {
+	var stateChangesMu sync.Mutex
 	stateChanges := []string{}
 	cb := NewCircuitBreaker(CircuitBreakerConfig{
 		Name:             "multi-transition",
@@ -384,7 +387,9 @@ func TestCircuitBreaker_MultipleStateTransitions(t *testing.T) {
 		Timeout:          50 * time.Millisecond,
 		MaxRequests:      5,
 		OnStateChange: func(name string, from, to CircuitState) {
+			stateChangesMu.Lock()
 			stateChanges = append(stateChanges, to.String())
+			stateChangesMu.Unlock()
 		},
 	})
 
@@ -412,8 +417,11 @@ func TestCircuitBreaker_MultipleStateTransitions(t *testing.T) {
 	}
 
 	// Verify state changes
-	if len(stateChanges) < 2 {
-		t.Errorf("expected at least 2 state changes, got %d", len(stateChanges))
+	stateChangesMu.Lock()
+	numChanges := len(stateChanges)
+	stateChangesMu.Unlock()
+	if numChanges < 2 {
+		t.Errorf("expected at least 2 state changes, got %d", numChanges)
 	}
 }
 
