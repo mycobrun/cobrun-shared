@@ -181,7 +181,7 @@ func TestLogger(t *testing.T) {
 
 	handler := Logger(logger)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("test response"))
+		_, _ = w.Write([]byte("test response"))
 	}))
 
 	req := httptest.NewRequest("GET", "/test?foo=bar", nil)
@@ -324,7 +324,7 @@ func TestTimeout(t *testing.T) {
 	handler := Timeout(100 * time.Millisecond)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Handler completes within timeout
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("success"))
+		_, _ = w.Write([]byte("success"))
 	}))
 
 	req := httptest.NewRequest("GET", "/test", nil)
@@ -343,7 +343,7 @@ func TestTimeout(t *testing.T) {
 func TestCompress(t *testing.T) {
 	handler := Compress(5)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("test response data that should be compressed if requested"))
+		_, _ = w.Write([]byte("test response data that should be compressed if requested"))
 	}))
 
 	req := httptest.NewRequest("GET", "/test", nil)
@@ -369,7 +369,7 @@ func TestMiddlewareChaining(t *testing.T) {
 			RequestID(
 				Logger(logger)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(http.StatusOK)
-					w.Write([]byte(`{"message": "success"}`))
+					_, _ = w.Write([]byte(`{"message": "success"}`))
 				})),
 			),
 		),

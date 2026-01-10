@@ -53,7 +53,7 @@ func TestResilientClient_Get(t *testing.T) {
 			t.Errorf("expected GET request, got %s", r.Method)
 		}
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+		_ = json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 	}))
 	defer server.Close()
 
@@ -84,7 +84,7 @@ func TestResilientClient_Post(t *testing.T) {
 		}
 
 		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(map[string]string{"id": "123"})
+		_ = json.NewEncoder(w).Encode(map[string]string{"id": "123"})
 	}))
 	defer server.Close()
 
@@ -186,7 +186,7 @@ func TestResilientClient_GetJSON(t *testing.T) {
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(TestData{ID: 123, Name: "test"})
+		_ = json.NewEncoder(w).Encode(TestData{ID: 123, Name: "test"})
 	}))
 	defer server.Close()
 
@@ -227,7 +227,7 @@ func TestResilientClient_PostJSON(t *testing.T) {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(ResponseData{ID: 456, Name: req.Name})
+		_ = json.NewEncoder(w).Encode(ResponseData{ID: 456, Name: req.Name})
 	}))
 	defer server.Close()
 
@@ -261,7 +261,7 @@ func TestResilientClient_Retry(t *testing.T) {
 			return
 		}
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+		_ = json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 	}))
 	defer server.Close()
 
