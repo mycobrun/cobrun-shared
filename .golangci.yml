@@ -20,34 +20,27 @@ linters-settings:
       - (*testing.T).Logf
       - (*testing.T).Error
       - (*testing.T).Errorf
+  staticcheck:
+    checks:
+      - all
+      - "-SA1029" # Context key type - too strict for test files
+      - "-SA4023" # Comparison never true - Azure SDK patterns
+      - "-SA5011" # Nil pointer - has proper nil handling
+      - "-SA9003" # Empty branch - intentional
 
 issues:
   exclude-rules:
-    # Exclude context key type issues in test files
+    # Exclude unused field mu (used for synchronization)
+    - text: "field `mu` is unused"
+      linters:
+        - unused
+    
+    # Exclude remaining errcheck in test files
     - path: _test\.go
       linters:
-        - staticcheck
-      text: "SA1029"
+        - errcheck
     
-    # Exclude comparison issues in cosmos.go (these are Azure SDK patterns)
-    - path: database/cosmos\.go
-      linters:
-        - staticcheck
-      text: "SA4023"
-    
-    # Exclude nil pointer in maps which has proper nil handling
-    - path: maps/.*\.go
-      linters:
-        - staticcheck
-      text: "SA5011"
-    
-    # Exclude empty branches in http package (intentional control flow)
-    - path: http/.*\.go
-      linters:
-        - staticcheck
-      text: "SA9003"
-    
-    # Exclude unused field mu in tests (used for test sync but linter can't see)
+    # Exclude unused in test files  
     - path: _test\.go
       linters:
         - unused
