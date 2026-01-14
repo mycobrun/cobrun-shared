@@ -107,6 +107,12 @@ func DefaultDatabaseConfig() *DatabaseConfig {
 				PartitionKeyPath: "/driver_id",
 				IndexingPolicy:   defaultIndexingPolicy(),
 			},
+			// Pricing containers
+			{
+				Name:             "price_sheets",
+				PartitionKeyPath: "/region",
+				IndexingPolicy:   defaultIndexingPolicy(),
+			},
 		},
 	}
 }
