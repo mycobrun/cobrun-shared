@@ -19,6 +19,8 @@ const (
 	UserIDContextKey ContextKey = "user_id"
 	// TokenContextKey is the context key for the raw JWT token.
 	TokenContextKey ContextKey = "token"
+	// ServiceTokenContextKey is the context key for service token authentication.
+	ServiceTokenContextKey ContextKey = "service_token"
 )
 
 // Middleware creates an authentication middleware.
@@ -60,6 +62,70 @@ func Middleware(jwtManager *JWTManager) func(http.Handler) http.Handler {
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
+}
+
+// MiddlewareWithServiceToken creates an authentication middleware that supports both
+// JWT Bearer tokens and service tokens for internal service-to-service calls.
+// The serviceToken parameter is the expected service token value.
+func MiddlewareWithServiceToken(jwtManager *JWTManager, serviceToken string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// First, check for service token (used for internal service-to-service calls)
+			if serviceToken != "" {
+				if svcToken := r.Header.Get("X-Service-Token"); svcToken != "" {
+					if svcToken == serviceToken {
+						// Valid service token - mark as service call and proceed
+						ctx := context.WithValue(r.Context(), ServiceTokenContextKey, true)
+						next.ServeHTTP(w, r.WithContext(ctx))
+						return
+					}
+					// Invalid service token
+					errors.WriteError(w, errors.Unauthorized("invalid service token"), "")
+					return
+				}
+			}
+
+			// Fall back to JWT authentication
+			authHeader := r.Header.Get("Authorization")
+			if authHeader == "" {
+				errors.WriteError(w, errors.Unauthorized(""), "")
+				return
+			}
+
+			// Expect "Bearer <token>"
+			parts := strings.SplitN(authHeader, " ", 2)
+			if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
+				errors.WriteError(w, errors.Unauthorized("invalid authorization header format"), "")
+				return
+			}
+
+			tokenString := parts[1]
+
+			// Validate token
+			claims, err := jwtManager.ValidateToken(tokenString)
+			if err != nil {
+				if err == ErrTokenExpired {
+					errors.WriteError(w, errors.Unauthorized("token expired"), "")
+				} else {
+					errors.WriteError(w, errors.Unauthorized("invalid token"), "")
+				}
+				return
+			}
+
+			// Add claims and token to context
+			ctx := context.WithValue(r.Context(), ClaimsContextKey, claims)
+			ctx = context.WithValue(ctx, UserIDContextKey, claims.UserID)
+			ctx = context.WithValue(ctx, TokenContextKey, tokenString)
+
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+}
+
+// IsServiceCall checks if the request was authenticated via service token.
+func IsServiceCall(ctx context.Context) bool {
+	val, ok := ctx.Value(ServiceTokenContextKey).(bool)
+	return ok && val
 }
 
 // OptionalMiddleware creates an optional authentication middleware.
