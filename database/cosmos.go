@@ -247,9 +247,9 @@ func (c *CosmosContainer) QueryCrossPartition(ctx context.Context, query string,
 		return c.Query(ctx, partitionKeyValue, query, params, results)
 	}
 
-	// For cross-partition queries, use NewQueryItemsPager without partition key
-	// azcosmos SDK v1.x supports this natively
-	pager := c.container.NewQueryItemsPager(query, azcosmos.PartitionKey{}, queryOptions)
+	// For cross-partition queries, use NewPartitionKey() which creates an empty partition key
+	// This signals to the SDK to do a cross-partition query
+	pager := c.container.NewQueryItemsPager(query, azcosmos.NewPartitionKey(), queryOptions)
 
 	var items []json.RawMessage
 	for pager.More() {
