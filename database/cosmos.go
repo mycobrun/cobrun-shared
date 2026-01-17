@@ -220,9 +220,8 @@ func (c *CosmosContainer) Query(ctx context.Context, partitionKey, query string,
 }
 
 // QueryCrossPartition executes a cross-partition query.
-// Note: The azcosmos SDK v0.3.6 requires a partition key for queries.
-// This function attempts to extract the partition key from common query parameters.
-// If no partition key is found, it signals the caller to use QueryAllPartitions instead.
+// With azcosmos SDK v1.x, we can use NewQueryItemsPager without a partition key
+// for true cross-partition queries.
 func (c *CosmosContainer) QueryCrossPartition(ctx context.Context, query string, params []QueryParam, results interface{}) error {
 	queryOptions := &azcosmos.QueryOptions{}
 	for _, p := range params {
@@ -243,17 +242,14 @@ func (c *CosmosContainer) QueryCrossPartition(ctx context.Context, query string,
 		}
 	}
 
-	// If we found a partition key value, use partition-scoped query
+	// If we found a partition key value, use partition-scoped query for efficiency
 	if partitionKeyValue != "" {
 		return c.Query(ctx, partitionKeyValue, query, params, results)
 	}
 
-	// For queries without a recognizable partition key, try with an empty partition key
-	// This may return empty results for containers that don't have empty partition keys
-	// Note: This is a limitation of the azcosmos SDK v0.3.6 which doesn't support
-	// true cross-partition queries. For cross-partition queries, use CosmosClient.QueryAllPartitions
-	pk := azcosmos.NewPartitionKeyString("")
-	pager := c.container.NewQueryItemsPager(query, pk, queryOptions)
+	// For cross-partition queries, use NewQueryItemsPager without partition key
+	// azcosmos SDK v1.x supports this natively
+	pager := c.container.NewQueryItemsPager(query, azcosmos.PartitionKey{}, queryOptions)
 
 	var items []json.RawMessage
 	for pager.More() {
@@ -402,37 +398,13 @@ func (c *CosmosClient) UpsertItem(ctx context.Context, database, containerName, 
 //	params := []QueryParam{{Name: "@userId", Value: userID}}
 //	err := client.QueryItems(ctx, "db", "container", query, params, &results)
 func (c *CosmosClient) QueryItems(ctx context.Context, database, containerName, query string, params []QueryParam, results interface{}) error {
-	// Check if any recognizable partition key parameter is present
-	var partitionKeyValue string
-	for _, p := range params {
-		if p.Name == "@email" || p.Name == "@user_id" || p.Name == "@userId" || p.Name == "@id" {
-			if v, ok := p.Value.(string); ok && v != "" {
-				partitionKeyValue = v
-				break
-			}
-		}
-	}
-
-	// If we found a partition key, use partition-scoped query for efficiency
-	if partitionKeyValue != "" {
-		container, err := c.Container(containerName)
-		if err != nil {
-			return err
-		}
-		return container.Query(ctx, partitionKeyValue, query, params, results)
-	}
-
-	// No partition key - need cross-partition query
-	// Prefer REST API method when key is available (more reliable for cross-partition)
-	if c.config.Key != "" {
-		return c.QueryAllPartitions(ctx, containerName, query, params, results)
-	}
-
-	// Fallback: try SDK cross-partition (may fail for some containers)
 	container, err := c.Container(containerName)
 	if err != nil {
 		return err
 	}
+
+	// Use QueryCrossPartition which handles both single-partition and cross-partition queries
+	// It will automatically use partition-scoped query if a partition key parameter is found
 	return container.QueryCrossPartition(ctx, query, params, results)
 }
 
