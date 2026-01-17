@@ -1,0 +1,15 @@
+./client.go
+./clock.go
+./configuration.go
+./constants.go
+./diagnostics.go
+./exception.go
+./inmemorychannel.go
+./jsonserializer.go
+./package.go
+./telemetry.go
+./telemetrychannel.go
+./telemetrycontext.go
+./throttle.go
+./transmitter.go
+./uuid.go

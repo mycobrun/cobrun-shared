@@ -1,0 +1,3 @@
+./azure.go
+./config.go
+./config_test.go

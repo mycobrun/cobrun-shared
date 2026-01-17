@@ -1,0 +1,6 @@
+./audit.go
+./azure.go
+./logger.go
+./audit_test.go
+./azure_test.go
+./logger_test.go

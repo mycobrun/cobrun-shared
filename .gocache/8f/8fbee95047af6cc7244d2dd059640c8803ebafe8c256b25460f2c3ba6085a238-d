@@ -1,0 +1,4 @@
+./notification_client.go
+./pricing_client.go
+./promotions_client.go
+./user_client.go

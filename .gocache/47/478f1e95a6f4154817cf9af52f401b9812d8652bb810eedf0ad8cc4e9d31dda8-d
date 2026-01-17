@@ -1,0 +1,4 @@
+./init.go
+./schemas.go
+./init_test.go
+./schemas_test.go

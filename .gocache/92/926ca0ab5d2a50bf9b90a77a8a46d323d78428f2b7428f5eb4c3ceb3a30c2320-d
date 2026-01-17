@@ -1,0 +1,5 @@
+./distance.go
+./geohash.go
+./h3.go
+./polygon.go
+./h3_test.go

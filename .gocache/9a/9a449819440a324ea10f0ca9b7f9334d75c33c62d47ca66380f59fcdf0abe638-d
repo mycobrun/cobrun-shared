@@ -1,0 +1,5 @@
+./connection_string_properties.go
+./error.go
+./log_events.go
+./retry_options.go
+./websocket_conn_params.go

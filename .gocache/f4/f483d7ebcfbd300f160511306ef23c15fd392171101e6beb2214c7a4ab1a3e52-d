@@ -1,0 +1,6 @@
+./eventhubs.go
+./servicebus.go
+./signalr.go
+./eventhubs_test.go
+./servicebus_test.go
+./signalr_test.go

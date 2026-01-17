@@ -1,0 +1,3 @@
+./audit.go
+./azure.go
+./logger.go

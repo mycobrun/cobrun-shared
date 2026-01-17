@@ -1,0 +1,4 @@
+./azure.go
+./metrics.go
+./tracing.go
+./azure_test.go

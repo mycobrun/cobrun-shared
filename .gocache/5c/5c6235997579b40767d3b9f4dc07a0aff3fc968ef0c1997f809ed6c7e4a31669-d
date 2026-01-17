@@ -1,0 +1,15 @@
+./amqp_message.go
+./checkpoint_store.go
+./connection_string_properties.go
+./consumer_client.go
+./doc.go
+./error.go
+./event_data.go
+./event_data_batch.go
+./log.go
+./mgmt.go
+./partition_client.go
+./processor.go
+./processor_load_balancer.go
+./processor_partition_client.go
+./producer_client.go

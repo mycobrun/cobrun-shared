@@ -403,26 +403,36 @@ func (c *CosmosClient) UpsertItem(ctx context.Context, database, containerName, 
 //	err := client.QueryItems(ctx, "db", "container", query, params, &results)
 func (c *CosmosClient) QueryItems(ctx context.Context, database, containerName, query string, params []QueryParam, results interface{}) error {
 	// Check if any recognizable partition key parameter is present
-	hasPartitionKey := false
+	var partitionKeyValue string
 	for _, p := range params {
 		if p.Name == "@email" || p.Name == "@user_id" || p.Name == "@userId" || p.Name == "@id" {
 			if v, ok := p.Value.(string); ok && v != "" {
-				hasPartitionKey = true
+				partitionKeyValue = v
 				break
 			}
 		}
 	}
 
-	// If no partition key parameter, use REST API for true cross-partition query
-	if !hasPartitionKey && c.config.Key != "" {
+	// If we found a partition key, use partition-scoped query for efficiency
+	if partitionKeyValue != "" {
+		container, err := c.Container(containerName)
+		if err != nil {
+			return err
+		}
+		return container.Query(ctx, partitionKeyValue, query, params, results)
+	}
+
+	// No partition key - need cross-partition query
+	// Prefer REST API method when key is available (more reliable for cross-partition)
+	if c.config.Key != "" {
 		return c.QueryAllPartitions(ctx, containerName, query, params, results)
 	}
 
+	// Fallback: try SDK cross-partition (may fail for some containers)
 	container, err := c.Container(containerName)
 	if err != nil {
 		return err
 	}
-	// Use cross-partition query for flexibility
 	return container.QueryCrossPartition(ctx, query, params, results)
 }
 
@@ -476,10 +486,11 @@ func (c *CosmosClient) QueryAllPartitions(ctx context.Context, containerName, qu
 		// Set required headers
 		req.Header.Set("Authorization", authHeader)
 		req.Header.Set("x-ms-date", dateStr)
-		req.Header.Set("x-ms-version", "2018-12-31")
+		req.Header.Set("x-ms-version", "2020-07-15")
 		req.Header.Set("Content-Type", "application/query+json")
 		req.Header.Set("x-ms-documentdb-isquery", "true")
 		req.Header.Set("x-ms-documentdb-query-enablecrosspartition", "true")
+		req.Header.Set("x-ms-max-item-count", "-1")
 
 		if continuationToken != "" {
 			req.Header.Set("x-ms-continuation", continuationToken)
